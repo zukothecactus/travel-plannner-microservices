@@ -17,5 +17,7 @@ namespace TravelPlanner.Interfaces
         Task<PlanPutovanja> GetPlanPutovanjaSaDetaljimaAsync(int planId);
         Task<bool> AddDestinacijaAsync(Destinacija destinacija);
         Task<bool> AddTrosakAsync(Trosak trosak);
+        Task<bool> ObrisiPlanPutovanjaAsync(int id);
+        Task<bool> ObrisiTrosakAsync(int id);
     }
 }

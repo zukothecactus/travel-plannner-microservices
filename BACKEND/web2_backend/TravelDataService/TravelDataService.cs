@@ -74,6 +74,35 @@ namespace TravelDataService
                 return true;
             }
         }
+        public async Task<bool> ObrisiPlanPutovanjaAsync(int id)
+        {
+            using (var context = new TravelDbContext())
+            {
+                var plan = await context.PlanoviPutovanja.FindAsync(id);
+                if (plan != null)
+                {
+                    context.PlanoviPutovanja.Remove(plan);
+                    await context.SaveChangesAsync();
+                    return true;
+                }
+                return false;
+            }
+        }
+
+        public async Task<bool> ObrisiTrosakAsync(int id)
+        {
+            using (var context = new TravelDbContext())
+            {
+                var trosak = await context.Troskovi.FindAsync(id);
+                if (trosak != null)
+                {
+                    context.Troskovi.Remove(trosak);
+                    await context.SaveChangesAsync();
+                    return true;
+                }
+                return false;
+            }
+        }
 
         public Task<string> PingAsync()
         {
@@ -109,5 +138,6 @@ namespace TravelDataService
                 await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
             }
         }
+
     }
 }

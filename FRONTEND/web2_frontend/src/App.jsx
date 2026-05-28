@@ -1,64 +1,113 @@
 import { useState, useEffect } from 'react';
-import api from './services/api';
-import './App.css'; // Ostavljamo default stilove koje je Vite generisao
+import { useSelector, useDispatch } from 'react-redux';
+import { dobaviPlan, dobaviPotrosnju, obrisiTrosak } from './store/planSlice';
+import DodajTrosak from './components/DodajTrosak';
+import ListaPlanova from './components/ListaPlanova';
+import DodajDestinaciju from './components/DodajDestinaciju';
+import './App.css';
 
 function App() {
-  // Stanja (state) za čuvanje podataka, učitavanja i potencijalnih grešaka
-  const [plan, setPlan] = useState(null);
-  const [ucitava, setUcitava] = useState(true);
-  const [greska, setGreska] = useState(null);
+  const dispatch = useDispatch();
+  
+  const [aktivniPlanId, setAktivniPlanId] = useState(null);
 
+  const { podaci, trenutniBudzet, ucitava, greska } = useSelector((state) => state.plan);
+
+  // okida se kada se aktivniPlanId promeni
   useEffect(() => {
-    // Definišemo asinhronu funkciju za povlačenje podataka
-    const ucitajPlan = async () => {
-      try {
-        // Gađamo rutu GET /api/PlanPutovanja/1
-        // Axios automatski konvertuje JSON iz tvog C# backend-a u JavaScript objekat
-        const odgovor = await api.get('/PlanPutovanja/1');
-        
-        setPlan(odgovor.data);
-      } catch (err) {
-        // U slučaju da klaster nije pokrenut ili CORS nije dobro podešen
-        setGreska(err.message);
-      } finally {
-        setUcitava(false);
-      }
-    };
-
-    // Pozivamo funkciju
-    ucitajPlan();
-  }, []); // Prazan niz [] osigurava da se useEffect pokrene SAMO JEDNOM, na početku
+    if (aktivniPlanId !== null) {
+      dispatch(dobaviPlan(aktivniPlanId));
+      dispatch(dobaviPotrosnju(aktivniPlanId));
+    }
+  }, [dispatch, aktivniPlanId]);
 
   return (
     <div className="app-container">
-      <h1>Moj Travel Planner</h1>
+      <h1>🌍 Moj Travel Planner</h1>
       
-      {/* Uslovno renderovanje na osnovu stanja */}
-      {ucitava && <p>Učitavanje podataka iz baze...</p>}
-      
-      {greska && <p style={{ color: 'red' }}>Došlo je do greške: {greska}</p>}
+      {/* Ako nemamo izabran plan, prikazujemo listu */}
+      {aktivniPlanId === null ? (
+        <ListaPlanova onIzaberiPlan={(id) => setAktivniPlanId(id)} />
+      ) : (
+        /* Ako imamo izabran plan, prikazujemo detalje */
+        <div>
+          <button 
+            onClick={() => setAktivniPlanId(null)} 
+            style={{ marginBottom: '20px', background: 'transparent', border: '1px solid #fff' }}
+          >
+            ← Nazad na sva putovanja
+          </button>
 
-      {/* Kada podaci stignu i nema greške, ispisujemo ih */}
-      {plan && (
-        <div style={{ textAlign: 'left', background: '#242424', padding: '20px', borderRadius: '8px', border: '1px solid #646cff' }}>
-          <h2>{plan.naziv}</h2>
-          <p><strong>Opis:</strong> {plan.opis}</p>
-          <p><strong>Planirani budžet:</strong> {plan.planiraniBudzet}</p>
-          
-          <hr />
-          
-          <h3>Zabeleženi troškovi:</h3>
-          {plan.troskovi && plan.troskovi.length > 0 ? (
-            <ul>
-              {plan.troskovi.map((trosak) => (
-                // Ključ (key) je obavezan u Reactu pri renderovanju listi
-                <li key={trosak.id}>
-                  {trosak.kategorija} - {trosak.opis}: <strong>{trosak.iznos}</strong>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p>Nema evidentiranih troškova za ovaj plan.</p>
+          {ucitava && <p>Učitavanje detalja plana...</p>}
+          {greska && <p style={{ color: 'red' }}>Greška: {greska}</p>}
+
+          {podaci && !ucitava && (
+            <div style={{ textAlign: 'left', background: '#242424', padding: '20px', borderRadius: '8px', border: '1px solid #646cff' }}>
+              <h2>{podaci.naziv}</h2>
+              <p><strong>Opis:</strong> {podaci.opis}</p>
+              
+              <div style={{ display: 'flex', justifyContent: 'space-between', background: '#1a1a1a', padding: '10px', borderRadius: '5px' }}>
+                <span><strong>Planirani budžet:</strong> {podaci.planiraniBudzet}</span>
+                <span style={{ color: trenutniBudzet > podaci.planiraniBudzet ? '#ff4d4d' : '#4dff4d' }}>
+                  <strong>Trenutna potrošnja:</strong> {trenutniBudzet}
+                </span>
+              </div>
+              
+              {/* FORMA ZA DESTINACIJE */}
+              <DodajDestinaciju planId={podaci.id} />
+
+              <hr style={{ margin: '20px 0', borderColor: '#444' }} />
+
+              {/* LISTA DESTINACIJA */}
+              <h3>Planirane destinacije:</h3>
+              {podaci.destinacije && podaci.destinacije.length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
+                  {podaci.destinacije.map((dest) => (
+                    <div key={dest.id} style={{ background: '#34495e', padding: '15px', borderRadius: '5px', borderLeft: '5px solid #3498db' }}>
+                      <h4 style={{ margin: '0 0 5px 0' }}>{dest.nazivMesta}</h4>
+                      {dest.napomena && <p style={{ margin: '0 0 10px 0', fontStyle: 'italic', fontSize: '14px', color: '#ccc' }}>{dest.napomena}</p>}
+                      <div style={{ fontSize: '13px', color: '#aaa' }}>
+                        <strong>Od:</strong> {new Date(dest.datumDolaska).toLocaleDateString()} <br />
+                        <strong>Do:</strong> {new Date(dest.datumOdlaska).toLocaleDateString()}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p style={{ color: '#888', marginBottom: '20px' }}>Nemate unetih destinacija za ovo putovanje.</p>
+              )}
+
+
+              <DodajTrosak planId={podaci.id} />
+
+              <hr style={{ margin: '20px 0', borderColor: '#444' }} />
+              
+              <h3>Zabeleženi troškovi:</h3>
+              {podaci.troskovi && podaci.troskovi.length > 0 ? (
+                <ul style={{ listStyleType: 'none', padding: 0 }}>
+                  {podaci.troskovi.map((trosak) => (
+                   <li key={trosak.id} style={{ background: '#333', padding: '10px', marginBottom: '5px', borderRadius: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div>
+                        <strong>{trosak.kategorija}</strong> - {trosak.opis} <br/>
+                        <span style={{ color: '#aaa' }}>Iznos: {trosak.iznos}</span>
+                      </div>
+                      <button 
+                        onClick={() => {
+                          if(window.confirm('Obriši ovaj trošak?')) {
+                            dispatch(obrisiTrosak({ trosakId: trosak.id, planId: podaci.id, iznos: trosak.iznos }));
+                          }
+                        }}
+                        style={{ background: '#ff4d4d', color: 'white', border: 'none', padding: '5px 10px', height: 'fit-content', cursor: 'pointer' }}
+                      >
+                        X
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p>Nema evidentiranih troškova za ovaj plan.</p>
+              )}
+            </div>
           )}
         </div>
       )}

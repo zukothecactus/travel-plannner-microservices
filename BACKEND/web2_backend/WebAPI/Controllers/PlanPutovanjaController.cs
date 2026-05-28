@@ -154,5 +154,39 @@ namespace WebAPI.Controllers
                 return StatusCode(500, $"Greška pri komunikaciji sa Stateful servisom: {ex.Message}");
             }
         }
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> ObrisiPlan(int id)
+        {
+            var uspesno = await _travelDataServiceProxy.ObrisiPlanPutovanjaAsync(id);
+            if (uspesno) return Ok("Plan putovanja je uspešno obrisan.");
+            return NotFound("Plan putovanja nije pronađen.");
+        }
+
+        [HttpDelete("trosak/{id}")]
+        public async Task<IActionResult> ObrisiTrosak(int id, [FromQuery] int planId, [FromQuery] double iznos)
+        {
+            try
+            {
+                var uspesno = await _travelDataServiceProxy.ObrisiTrosakAsync(id);
+                if (uspesno)
+                {
+                    // Sinhronizacija sa Stateful servisom - oduzimamo obrisani iznos!
+                    var budgetProxy = ServiceProxy.Create<ISharingAndBudgetService>(
+                        new Uri("fabric:/TravelPlannerApp/SharingAndBudgetService"),
+                        new ServicePartitionKey(planId));
+
+                    // Prosleđujemo negativnu vrednost
+                    await budgetProxy.DodajTrosakUBudzetAsync(planId, -iznos);
+
+                    return Ok("Trošak je obrisan i budžet u memoriji je ažuriran.");
+                }
+                return BadRequest("Greška pri brisanju troška iz baze.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Greška: {ex.Message}");
+            }
+        }
     }
 }
