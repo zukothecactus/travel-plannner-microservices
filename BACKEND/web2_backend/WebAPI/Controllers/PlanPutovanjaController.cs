@@ -4,9 +4,11 @@ using Microsoft.ServiceFabric.Services.Remoting.Client;
 using TravelPlanner.Interfaces;
 using TravelPlanner.Interfaces.Models;
 using Microsoft.ServiceFabric.Services.Client;
+using Microsoft.AspNetCore.Authorization;
 
 namespace WebAPI.Controllers
 {
+    [Authorize] //zakljucavamo sve rute u ovom kontroleru, tako da je potrebno da korisnik bude autentifikovan da bi pristupio bilo kojoj od njih
     [Route("api/[controller]")]
     [ApiController]
     public class PlanPutovanjaController : ControllerBase

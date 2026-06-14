@@ -1,29 +1,66 @@
 import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { dobaviPlan, dobaviPotrosnju, obrisiTrosak } from './store/planSlice';
+import {logout} from './store/authSlice';
 import DodajTrosak from './components/DodajTrosak';
 import ListaPlanova from './components/ListaPlanova';
 import DodajDestinaciju from './components/DodajDestinaciju';
 import Spisak from './components/Spisak'; // Uvezen naš novi padajući meni
+import Login from './components/Login';
+import Register from './components/Register';
 import './App.css';
 
 function App() {
   const dispatch = useDispatch();
   
+  //povako proveravamo da li pokazujemo login ili register formu
+  const [prikaziLogin, setPrikaziLogin] = useState(true);
+
   const [aktivniPlanId, setAktivniPlanId] = useState(null);
+  
+  //izvlavimo token i korisnika iz reduxa
+  const {token, korisnik} = useSelector((state) => state.auth);
   const { podaci, trenutniBudzet, ucitava, greska } = useSelector((state) => state.plan);
 
+
   useEffect(() => {
-    if (aktivniPlanId !== null) {
+    if (token && aktivniPlanId !== null) {
       dispatch(dobaviPlan(aktivniPlanId));
       dispatch(dobaviPotrosnju(aktivniPlanId));
     }
-  }, [dispatch, aktivniPlanId]);
+  }, [dispatch, aktivniPlanId, token]);
+
+  if (!token) {
+    return (
+      <div className="app-container">
+        <h1>🌍 Dobrodošli u Travel Planner</h1>
+        {prikaziLogin ? (
+          <Login onPrebaciNaRegistraciju={() => setPrikaziLogin(false)} />
+        ) : (
+          <Register onPrebaciNaLogin={() => setPrikaziLogin(true)} />
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="app-container">
-      <h1>🌍 Moj Travel Planner</h1>
-      
+      {/* HEADER SA DUGMETOM ZA ODJAVU */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#1a1a1a', padding: '10px 20px', borderRadius: '8px', marginBottom: '20px' }}>
+        <h1 style={{ margin: 0, fontSize: '24px' }}>🌍 Moj Travel Planner</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          <span>Zdravo, <strong>{korisnik?.ime}</strong>!</span>
+          <button 
+            onClick={() => {
+              dispatch(logout()); // Odjava
+              setAktivniPlanId(null); // Resetujemo aktivni plan
+            }} 
+            style={{ background: '#ff4d4d', padding: '8px 15px' }}
+          >
+            Odjavi se
+          </button>
+        </div>
+      </div>
       {aktivniPlanId === null ? (
         <ListaPlanova onIzaberiPlan={(id) => setAktivniPlanId(id)} />
       ) : (

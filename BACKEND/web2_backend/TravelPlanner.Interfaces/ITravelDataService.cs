@@ -22,5 +22,9 @@ namespace TravelPlanner.Interfaces
         Task<bool> DodajToDoStavkuAsync(ToDoStavka stavka);
         Task<bool> PromeniStatusStavkeAsync(int id);
         Task<bool> ObrisiToDoStavkuAsync(int id);
+
+        Task<bool> RegistrujKorisnikaAsync(RegistracijaDto podaci);
+
+        Task<KorisnikInfo> ProverKredencijalAsync(PrijavaDto podaci);
     }
 }

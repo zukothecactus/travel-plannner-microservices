@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Fabric;
 using System.IO;
@@ -10,7 +10,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.ServiceFabric.Services.Communication.AspNetCore;
 using Microsoft.ServiceFabric.Services.Communication.Runtime;
 using Microsoft.ServiceFabric.Services.Runtime;
-using Microsoft.ServiceFabric.Data;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 namespace WebAPI
 {
@@ -57,6 +59,31 @@ namespace WebAPI
                                 });
                             });
 
+                        builder.Services.AddAuthentication(options =>
+                        {
+                            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                        })
+                        .AddJwtBearer(options =>
+                        {
+                            options.TokenValidationParameters = new TokenValidationParameters
+                            {
+                                ValidateIssuer = true,
+                                ValidateAudience = true,
+                                ValidateLifetime = true,
+                                ValidateIssuerSigningKey = true,
+                                ValidIssuer = "TravelPlannerApp",
+                                ValidAudience = "TravelPlannerAppUsers",
+                                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("nekiTajniKljucZaJWTmoraDaBudeJakoDugacakIliEnkripcijaNeceRaditiKakoTrebaIProgramCeOtkazati"))
+                            };
+                        });
+
+                        // Dodavanje polise za administratora (RBAC)
+                        builder.Services.AddAuthorization(options =>
+                        {
+                            options.AddPolicy("ZahtevaAdmina", policy => policy.RequireRole("ADMIN"));
+                        });
+                       
                         var app = builder.Build();
                         if (app.Environment.IsDevelopment())
                         {
@@ -64,6 +91,7 @@ namespace WebAPI
                         app.UseSwaggerUI();
                         }
                         app.UseCors("DozvoliReact");
+                        app.UseAuthentication();
                         app.UseAuthorization();
                         app.MapControllers();
                         

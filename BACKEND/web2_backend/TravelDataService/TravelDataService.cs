@@ -144,6 +144,58 @@ namespace TravelDataService
             }
         }
 
+        public async Task<bool> RegistrujKorisnikaAsync(RegistracijaDto podaci)
+        {
+            using (var context = new TravelDbContext())
+            {
+                // 1. Backend validacija: Da li email već postoji u bazi?
+                var emailPostoji = await context.Korisnici.AnyAsync(k => k.Email == podaci.Email);
+                if (emailPostoji)
+                {
+                    return false; // Prekidamo ako korisnik sa ovim emailom već postoji
+                }
+
+                // 2. Kreiranje novog korisnika i heširanje lozinke
+                var noviKorisnik = new Korisnik
+                {
+                    Ime = podaci.Ime,
+                    Email = podaci.Email,
+                    // BCrypt automatski generiše i 'salt' i heš
+                    LozinkaHash = BCrypt.Net.BCrypt.HashPassword(podaci.Lozinka),
+                    Uloga = "KORISNIK" // Default uloga za svakog novog člana
+                };
+
+                // 3. Čuvanje u bazi
+                context.Korisnici.Add(noviKorisnik);
+                await context.SaveChangesAsync();
+
+                return true;
+            }
+        }
+
+        public async Task<KorisnikInfo> ProverKredencijalAsync(PrijavaDto podaci)
+        {
+            using (var context = new TravelDbContext())
+            {
+                var korisnik = await context.Korisnici.FirstOrDefaultAsync(k => k.Email == podaci.Email);
+
+                if (korisnik == null) return null;
+
+                //lozinka check
+                bool lozinkaValidna = BCrypt.Net.BCrypt.Verify(podaci.Lozinka, korisnik.LozinkaHash);
+
+                if (!lozinkaValidna) return null;
+
+                return new KorisnikInfo
+                {
+                    Id = korisnik.Id,
+                    Ime = korisnik.Ime,
+                    Email = korisnik.Email,
+                    Uloga = korisnik.Uloga
+                };
+            }
+        }
+
         public Task<string> PingAsync()
         {
             return Task.FromResult("Pozdrav od TravelData servisa! Remoting radi besprekorno.");
