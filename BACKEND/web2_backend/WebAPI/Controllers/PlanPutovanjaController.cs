@@ -188,5 +188,50 @@ namespace WebAPI.Controllers
                 return StatusCode(500, $"Greška: {ex.Message}");
             }
         }
+
+        [HttpPost("todo")]
+        public async Task<IActionResult> DodajToDo([FromBody] ToDoStavka stavka)
+        {
+                       try
+            {
+                var uspesno = await _travelDataServiceProxy.DodajToDoStavkuAsync(stavka);
+                if (uspesno) return Ok("ToDo stavka je uspešno dodata!");
+                return BadRequest("Greška pri dodavanju ToDo stavke.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Greška servera: {ex.Message}");
+            }
+        }
+
+        [HttpPut("todo/{id}/toggle")]
+        public async Task<IActionResult> ToggleToDo(int id)
+        {
+            try
+            {
+                var uspesno = await _travelDataServiceProxy.PromeniStatusStavkeAsync(id);
+                if (uspesno) return Ok("Status ToDo stavke je uspešno promenjen!");
+                return BadRequest("Greška pri promeni statusa ToDo stavke.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Greška servera: {ex.Message}");
+            }
+        }
+
+        [HttpDelete("todo/{id}")]
+        public async Task<IActionResult> ObrisiToDo(int id)
+        {
+            try
+            {
+                var uspesno = await _travelDataServiceProxy.ObrisiToDoStavkuAsync(id);
+                if (uspesno) return Ok("ToDo stavka je uspešno obrisana!");
+                return BadRequest("Greška pri brisanju ToDo stavke.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Greška servera: {ex.Message}");
+            }
+        }
     }
 }

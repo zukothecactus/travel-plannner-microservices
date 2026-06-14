@@ -51,6 +51,7 @@ namespace TravelDataService
             {
                 return await context.PlanoviPutovanja.Include(p => p.Destinacije).ThenInclude(d => d.Aktivnosti)
                     .Include(p => p.Troskovi)
+                    .Include(p => p.Spisak)
                     .FirstOrDefaultAsync(p => p.Id == planId);
 
 
@@ -97,6 +98,45 @@ namespace TravelDataService
                 if (trosak != null)
                 {
                     context.Troskovi.Remove(trosak);
+                    await context.SaveChangesAsync();
+                    return true;
+                }
+                return false;
+            }
+        }
+
+        public async Task<bool>DodajToDoStavkuAsync(ToDoStavka stavka)
+        {             
+            using (var context = new TravelDbContext())
+            {
+                context.ToDoStavke.Add(stavka);
+                await context.SaveChangesAsync();
+                return true;
+            }
+        }
+        public async Task<bool> PromeniStatusStavkeAsync(int id)
+        {
+            using (var context = new TravelDbContext())
+            {
+                var stavka = context.ToDoStavke.Find(id);
+                if (stavka != null)
+                {
+                    stavka.JeZavrseno = !stavka.JeZavrseno; // Menjamo status
+                    await context.SaveChangesAsync();
+                    return true;
+                }
+                return false;
+            }
+        }
+
+        public async Task<bool> ObrisiToDoStavkuAsync(int id)
+        {
+            using (var context = new TravelDbContext())
+            {
+                var stavka = await context.ToDoStavke.FindAsync(id);
+                if (stavka != null)
+                {
+                    context.ToDoStavke.Remove(stavka);
                     await context.SaveChangesAsync();
                     return true;
                 }

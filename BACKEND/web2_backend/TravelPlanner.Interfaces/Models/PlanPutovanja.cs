@@ -15,6 +15,8 @@ namespace TravelPlanner.Interfaces.Models
         public DateTime DatumPocetka { get; set; }
         public DateTime DatumZavrsetka { get; set; }
         public double PlaniraniBudzet { get; set; }
+
+        public List<ToDoStavka> Spisak { get; set; } = new List<ToDoStavka>();
         public ICollection<Destinacija> Destinacije { get; set; } = new List<Destinacija>();
         public ICollection<Trosak> Troskovi { get; set; } = new List<Trosak>();
     }

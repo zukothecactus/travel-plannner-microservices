@@ -19,5 +19,8 @@ namespace TravelPlanner.Interfaces
         Task<bool> AddTrosakAsync(Trosak trosak);
         Task<bool> ObrisiPlanPutovanjaAsync(int id);
         Task<bool> ObrisiTrosakAsync(int id);
+        Task<bool> DodajToDoStavkuAsync(ToDoStavka stavka);
+        Task<bool> PromeniStatusStavkeAsync(int id);
+        Task<bool> ObrisiToDoStavkuAsync(int id);
     }
 }

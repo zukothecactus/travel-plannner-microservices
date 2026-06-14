@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { dodajDestinaciju } from '../store/planSlice';
+import {toast} from 'react-toastify';
 
 const DodajDestinaciju = ({ planId }) => {
   const dispatch = useDispatch();
@@ -14,7 +15,7 @@ const DodajDestinaciju = ({ planId }) => {
     e.preventDefault();
     
     if (!nazivMesta || !datumDolaska || !datumOdlaska) {
-        alert('Molimo unesite naziv mesta i oba datuma.');
+        toast.warning('Molimo unesite naziv mesta i oba datuma.');
         return;
     }
 
@@ -27,13 +28,19 @@ const DodajDestinaciju = ({ planId }) => {
       planPutovanjaId: planId
     };
 
-    dispatch(dodajDestinaciju(novaDestinacija));
-    
-    // Resetovanje forme
-    setNazivMesta('');
-    setNapomena('');
-    setDatumDolaska('');
-    setDatumOdlaska('');
+    dispatch(dodajDestinaciju(novaDestinacija))
+    .unwrap()
+    .then(() => {
+        toast.success('Destinacija uspešno dodata');
+        // Resetovanje forme
+        setNazivMesta('');
+        setNapomena('');
+        setDatumDolaska('');
+        setDatumOdlaska('');
+    })
+    .catch((err) => {
+        toast.error('Došlo je do greške prilikom dodavanja destinacije: ' + err.message);
+    });
   };
 
   return (

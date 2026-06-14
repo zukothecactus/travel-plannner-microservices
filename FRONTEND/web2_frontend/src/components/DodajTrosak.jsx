@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { dodajTrosak } from '../store/planSlice';
+import {toast} from 'react-toastify';
 
 const DodajTrosak = ({ planId }) => {
   const dispatch = useDispatch();
@@ -15,7 +16,7 @@ const DodajTrosak = ({ planId }) => {
     e.preventDefault();
     
     if (!opis || !iznos) {
-        alert('Molimo popunite sva polja.');
+        toast.warning('Molimo popunite sva polja.');
         return;
     }
 
@@ -27,10 +28,17 @@ const DodajTrosak = ({ planId }) => {
       planPutovanjaId: planId
     };
 
-    dispatch(dodajTrosak(noviTrosak));
-    
-    setOpis('');
-    setIznos('');
+    dispatch(dodajTrosak(noviTrosak))
+    .unwrap()
+    .then(() =>
+    {
+        toast.success('Trošak uspešno dodat');
+        setOpis('');
+        setIznos('');
+    }).catch((err)=>
+    {
+        toast.error('Došlo je do greške prilikom dodavanja troška' + err.message);
+    });
   };
 
   return (
@@ -59,8 +67,7 @@ const DodajTrosak = ({ planId }) => {
           onChange={(e) => setIznos(e.target.value)} 
         />
         
-        {/* Obrati pažnju: ovde se stavlja samo onSubmit na formi, a dugme je type="submit" */}
-        <button type="submit" style={{ cursor: 'pointer', background: '#646cff' }}>
+        <button type="submit" style={{ cursor: 'pointer', background: '#646cff', color: 'white', border: 'none', padding: '10px', borderRadius: '4px' }}>
           Evidentiraj trošak
         </button>
       </form>

@@ -84,6 +84,34 @@ export const dodajDestinaciju = createAsyncThunk(
     }
 );
 
+export const dodajNaSpisak = createAsyncThunk(
+    'plan/dodajNaSpisak',
+    async (novaStavka, {dispatch}) =>
+    {
+        await api.post('/PlanPutovanja/todo', novaStavka);
+        dispatch(dobaviPlan(novaStavka.PlanPutovanjaId));
+        return novaStavka;
+    }
+);
+
+export const toggleZavrseno = createAsyncThunk(
+    'plan/toggleZavrseno',
+    async ({ stavkaId, planId }, { dispatch }) => {
+        await api.put(`/PlanPutovanja/todo/${stavkaId}/toggle`);
+        dispatch(dobaviPlan(planId));
+        return stavkaId;
+    }   
+);
+
+export const obrisiSaSpiska = createAsyncThunk(
+    'plan/obrisiSaSpiska',
+    async ({ stavkaId, planId }, { dispatch }) => {
+        await api.delete(`/PlanPutovanja/todo/${stavkaId}`);
+        dispatch(dobaviPlan(planId));
+        return stavkaId;
+    }
+);
+
 //global store
 const initialState = 
 {

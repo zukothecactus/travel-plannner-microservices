@@ -4,16 +4,15 @@ import { dobaviPlan, dobaviPotrosnju, obrisiTrosak } from './store/planSlice';
 import DodajTrosak from './components/DodajTrosak';
 import ListaPlanova from './components/ListaPlanova';
 import DodajDestinaciju from './components/DodajDestinaciju';
+import Spisak from './components/Spisak'; // Uvezen naš novi padajući meni
 import './App.css';
 
 function App() {
   const dispatch = useDispatch();
   
   const [aktivniPlanId, setAktivniPlanId] = useState(null);
-
   const { podaci, trenutniBudzet, ucitava, greska } = useSelector((state) => state.plan);
 
-  // okida se kada se aktivniPlanId promeni
   useEffect(() => {
     if (aktivniPlanId !== null) {
       dispatch(dobaviPlan(aktivniPlanId));
@@ -25,11 +24,9 @@ function App() {
     <div className="app-container">
       <h1>🌍 Moj Travel Planner</h1>
       
-      {/* Ako nemamo izabran plan, prikazujemo listu */}
       {aktivniPlanId === null ? (
         <ListaPlanova onIzaberiPlan={(id) => setAktivniPlanId(id)} />
       ) : (
-        /* Ako imamo izabran plan, prikazujemo detalje */
         <div>
           <button 
             onClick={() => setAktivniPlanId(null)} 
@@ -41,7 +38,7 @@ function App() {
           {ucitava && <p>Učitavanje detalja plana...</p>}
           {greska && <p style={{ color: 'red' }}>Greška: {greska}</p>}
 
-          {podaci && !ucitava && (
+          {podaci && (
             <div style={{ textAlign: 'left', background: '#242424', padding: '20px', borderRadius: '8px', border: '1px solid #646cff' }}>
               <h2>{podaci.naziv}</h2>
               <p><strong>Opis:</strong> {podaci.opis}</p>
@@ -52,6 +49,10 @@ function App() {
                   <strong>Trenutna potrošnja:</strong> {trenutniBudzet}
                 </span>
               </div>
+              
+              <Spisak planId={podaci.id} stavke={podaci.spisak || []} />
+              
+              <hr style={{ margin: '20px 0', borderColor: '#444' }} />
               
               {/* FORMA ZA DESTINACIJE */}
               <DodajDestinaciju planId={podaci.id} />
@@ -77,16 +78,19 @@ function App() {
                 <p style={{ color: '#888', marginBottom: '20px' }}>Nemate unetih destinacija za ovo putovanje.</p>
               )}
 
+              <hr style={{ margin: '20px 0', borderColor: '#444' }} />
 
+              {/* FORMA ZA TROŠKOVE */}
               <DodajTrosak planId={podaci.id} />
 
               <hr style={{ margin: '20px 0', borderColor: '#444' }} />
               
+              {/* LISTA TROŠKOVA SA DUGMETOM ZA BRISANJE */}
               <h3>Zabeleženi troškovi:</h3>
               {podaci.troskovi && podaci.troskovi.length > 0 ? (
                 <ul style={{ listStyleType: 'none', padding: 0 }}>
                   {podaci.troskovi.map((trosak) => (
-                   <li key={trosak.id} style={{ background: '#333', padding: '10px', marginBottom: '5px', borderRadius: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <li key={trosak.id} style={{ background: '#333', padding: '10px', marginBottom: '5px', borderRadius: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div>
                         <strong>{trosak.kategorija}</strong> - {trosak.opis} <br/>
                         <span style={{ color: '#aaa' }}>Iznos: {trosak.iznos}</span>

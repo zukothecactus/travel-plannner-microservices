@@ -15,6 +15,7 @@ namespace TravelDataService.Models
         public DbSet<Destinacija> Destinacije { get; set; }
         public DbSet<Aktivnost> Aktivnosti { get; set; }
         public DbSet<Trosak> Troskovi { get; set; }
+        public DbSet<ToDoStavka> ToDoStavke { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

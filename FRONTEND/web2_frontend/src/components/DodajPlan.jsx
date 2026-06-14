@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { kreirajPlan } from '../store/planSlice';
+import {toast} from 'react-toastify';
 
 const DodajPlan = () => {
   const dispatch = useDispatch();
@@ -17,7 +18,7 @@ const DodajPlan = () => {
     e.preventDefault();
     
     if (!naziv || !planiraniBudzet) {
-        alert('Molimo unesite naziv i planirani budžet.');
+        toast.warning('Molimo unesite naziv i planirani budžet.');
         return;
     }
 
@@ -27,13 +28,19 @@ const DodajPlan = () => {
       planiraniBudzet: parseFloat(planiraniBudzet)
     };
 
-    dispatch(kreirajPlan(noviPlan));
-    
-    // Resetujemo formu i zatvaramo je
-    setNaziv('');
-    setOpis('');
-    setPlaniraniBudzet('');
-    setPrikaziFormu(false);
+    dispatch(kreirajPlan(noviPlan))
+    .unwrap()
+    .then(() =>
+        {
+            toast.success('Plan putovanja uspešno kreiran');
+            setNaziv('');
+            setOpis('');
+            setPlaniraniBudzet('');
+            setPrikaziFormu(false);
+        }).catch((err) => 
+        { 
+            toast.error('Došlo je do greške prilikom kreiranja plana putovanja: ' + err.message);
+        });
   };
 
   // Ako forma nije aktivna, prikazujemo samo dugme
