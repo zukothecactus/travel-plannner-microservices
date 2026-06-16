@@ -12,8 +12,8 @@ namespace TravelPlanner.Interfaces
     {
         Task<string> PingAsync();
 
-        Task<bool> AddPlanPutovanjaAsync(PlanPutovanja plan);
-        Task<List<PlanPutovanja>> GetPlanoviPutovanjaAsync();
+        Task<bool> AddPlanPutovanjaAsync(PlanPutovanja plan, int korisnikId);
+        Task<List<PlanPutovanja>> GetPlanoviPutovanjaAsync(int korisnikId);
         Task<PlanPutovanja> GetPlanPutovanjaSaDetaljimaAsync(int planId);
         Task<bool> AddDestinacijaAsync(Destinacija destinacija);
         Task<bool> AddTrosakAsync(Trosak trosak);
@@ -22,9 +22,9 @@ namespace TravelPlanner.Interfaces
         Task<bool> DodajToDoStavkuAsync(ToDoStavka stavka);
         Task<bool> PromeniStatusStavkeAsync(int id);
         Task<bool> ObrisiToDoStavkuAsync(int id);
-
         Task<bool> RegistrujKorisnikaAsync(RegistracijaDto podaci);
-
         Task<KorisnikInfo> ProverKredencijalAsync(PrijavaDto podaci);
+        Task<List<KorisnikInfo>> DobaviSveKorisnikeAsync();
+        Task<bool> ObrisiKorisnikaAsync(int korisnikId);
     }
 }

@@ -24,11 +24,12 @@ namespace TravelDataService
         { }
 
 
-        public async Task<bool> AddPlanPutovanjaAsync(PlanPutovanja plan)
+        public async Task<bool> AddPlanPutovanjaAsync(PlanPutovanja plan, int korisnikId)
         {
             using (var context = new TravelDbContext())
             {
                 // Entity Framework sam prati stanje, samo dodamo objekat i sačuvamo
+                plan.KorisnikId = korisnikId;
                 context.PlanoviPutovanja.Add(plan);
                 await context.SaveChangesAsync();
                 return true;
@@ -36,12 +37,12 @@ namespace TravelDataService
         }
 
 
-        public async Task<List<PlanPutovanja>> GetPlanoviPutovanjaAsync()
+        public async Task<List<PlanPutovanja>> GetPlanoviPutovanjaAsync(int korisnikId)
         {
             using (var context = new TravelDbContext())
             {
                 // Vraćamo sve planove kao listu
-                return await context.PlanoviPutovanja.ToListAsync();
+                return await context.PlanoviPutovanja.Where(p => p.KorisnikId == korisnikId).ToListAsync();
             }
         }
 
@@ -105,7 +106,7 @@ namespace TravelDataService
             }
         }
 
-        public async Task<bool>DodajToDoStavkuAsync(ToDoStavka stavka)
+        public async Task<bool> DodajToDoStavkuAsync(ToDoStavka stavka)
         {             
             using (var context = new TravelDbContext())
             {
@@ -196,6 +197,35 @@ namespace TravelDataService
             }
         }
 
+        public async Task<List<KorisnikInfo>> DobaviSveKorisnikeAsync()
+        {
+            using (var context = new TravelDbContext())
+            {
+                return await context.Korisnici
+                    .Select(k => new KorisnikInfo //bukv samo dto za podatke, nego ga nsm lep nazvao xd
+                    {
+                        Id = k.Id,
+                        Ime = k.Ime,
+                        Email = k.Email,
+                        Uloga = k.Uloga
+                    })
+                    .ToListAsync();
+            }
+        }
+        public async Task<bool> ObrisiKorisnikaAsync(int korisnikId)
+        {
+            using (var context = new TravelDbContext())
+            {
+                var korisnik = await context.Korisnici.FindAsync(korisnikId);
+                if (korisnik != null && korisnik.Id != 1) // nikako ne brisemo glavnog admina
+                {
+                    context.Korisnici.Remove(korisnik);
+                    await context.SaveChangesAsync();
+                    return true;
+                }
+                return false;
+            }
+        }
         public Task<string> PingAsync()
         {
             return Task.FromResult("Pozdrav od TravelData servisa! Remoting radi besprekorno.");

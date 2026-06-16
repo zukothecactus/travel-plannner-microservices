@@ -112,6 +112,35 @@ export const obrisiSaSpiska = createAsyncThunk(
     }
 );
 
+export const generisiLinkZaDeljenje = createAsyncThunk(
+    'plan/generisiLinkZaDeljenje',
+    async({planId, nivoPristupa, trajanjeUMinutima = 1440}, {rejectWithValue}) => {
+        try {
+            const response = await api.post(`/PlanPutovanja/${planId}/generisi-token`, {
+                nivoPristupa,
+                trajanjeUMinutima
+            });
+            return response.data.token;
+        }catch (error) {
+            return rejectWithValue(error.response?.data || "Greska pri generisanju linka za deljenje.");
+
+        }
+    }
+);
+
+export const validirajDeljeniLink = createAsyncThunk(
+    'plan/validirajDeljeniLink',
+    async (token, { rejectWithValue }) => {
+        try {
+            // Slanje GET zahteva sa tokenom u URL-u (ovo je ona [AllowAnonymous] ruta)
+            const odgovor = await api.get(`/PlanPutovanja/validiraj-deljenje/${token}`);
+            return odgovor.data; // Očekujemo { plan: {...}, nivoPristupa: "VIEW"|"EDIT", poruka }
+        } catch (error) {
+            return rejectWithValue(error.response?.data || "Neispravan ili istekao link za deljenje.");
+        }
+    }
+);
+
 //global store
 const initialState = 
 {
@@ -120,6 +149,12 @@ const initialState =
     trenutniBudzet: null,
     ucitava: false,
     greska: null,
+
+    deljeniPlan: null, // Čuvamo podatke o planu koji je deljen putem linka
+    nivoPristupaDeljenog: null,
+    deljenjUcitava: false,
+    deljenjGreska: null,
+    generisaniToken: null, // Token koji je generisan za deljenje
 };
 //slajs
 const planSlice = createSlice({
@@ -161,6 +196,31 @@ const planSlice = createSlice({
             .addCase(dobaviSvePlanove.rejected, (state, action) => {
                 state.ucitava = false;
                 state.greska = action.error.message;
+            })
+            .addCase(generisiLinkZaDeljenje.pending, (state) => {
+                state.greska = null;
+            })
+            .addCase(generisiLinkZaDeljenje.fulfilled, (state, action) => {
+                state.generisaniToken = action.payload; // Čuvamo token kako bi ga komponenta pretvorila u QR kod
+            })
+            .addCase(generisiLinkZaDeljenje.rejected, (state, action) => {
+                state.greska = action.payload;
+            })
+            .addCase(validirajDeljeniLink.pending, (state) => {
+                state.deljenjeUcitava = true;
+                state.deljenjeGreska = null;
+                state.deljeniPlan = null;
+                state.nivoPristupaDeljenog = null;
+            })
+            .addCase(validirajDeljeniLink.fulfilled, (state, action) => {
+                state.deljenjeUcitava = false;
+                // Akcija payload sadrži strukturu koju nam vraća C#: { Plan, NivoPristupa, Poruka }
+                state.deljeniPlan = action.payload.plan; 
+                state.nivoPristupaDeljenog = action.payload.nivoPristupa;
+            })
+            .addCase(validirajDeljeniLink.rejected, (state, action) => {
+                state.deljenjeUcitava = false;
+                state.deljenjeGreska = action.payload;
             });
     },
 });

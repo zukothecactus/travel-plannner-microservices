@@ -11,13 +11,14 @@ namespace TravelPlanner.Interfaces.Models
     public class Aktivnost
     {
         public int Id { get; set; }
-        public string Naziv { get; set; }
-        public string Opis { get; set; }
+        public string? Naziv { get; set; }
+        public string? Opis { get; set; }
         public DateTime VremePocetka { get; set; }
         public DateTime VremeZavrsetka { get; set; }
 
         // Strani ključ koji povezuje aktivnost sa određenom destinacijom
         public int DestinacijaId { get; set; }
+        
         [JsonIgnore]
         //Ovaj ignore mora da postoji kako ne bismo imali kruznu zavisnost i kako bi validator ocekivao samo ID lol
         //Moramo da stavimo i znak pitanja kako bi se izbegle greške prilikom serijalizacije, jer u nekim slučajevima možda nećemo imati celu destinaciju već samo njen ID

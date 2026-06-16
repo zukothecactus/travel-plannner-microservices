@@ -5,6 +5,11 @@ using TravelPlanner.Interfaces;
 using TravelPlanner.Interfaces.Models;
 using Microsoft.ServiceFabric.Services.Client;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+
 
 namespace WebAPI.Controllers
 {
@@ -26,13 +31,20 @@ namespace WebAPI.Controllers
 
         }
 
+        private int DobaviIdUlogovanogKorisnika()
+        {
+            var idString = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue(JwtRegisteredClaimNames.Sub);
+            return int.Parse(idString);
+        }
+
         [HttpPost]
         public async Task<IActionResult> DodajNoviPlan([FromBody] PlanPutovanja plan)
         {
             try
             {
+                var korisnikId = DobaviIdUlogovanogKorisnika();
                 // Pozivamo tvoju novu metodu
-                var uspesno = await _travelDataServiceProxy.AddPlanPutovanjaAsync(plan);
+                var uspesno = await _travelDataServiceProxy.AddPlanPutovanjaAsync(plan, korisnikId);
 
                 if (uspesno)
                     return Ok("Plan putovanja je uspešno sačuvan u bazu!");
@@ -50,8 +62,9 @@ namespace WebAPI.Controllers
         {
             try
             {
+                var korisnikId = DobaviIdUlogovanogKorisnika();
                 // Pozivamo tvoju novu metodu za dobavljanje
-                var planovi = await _travelDataServiceProxy.GetPlanoviPutovanjaAsync();
+                var planovi = await _travelDataServiceProxy.GetPlanoviPutovanjaAsync(korisnikId);
                 return Ok(planovi);
             }
             catch (Exception ex)
@@ -233,6 +246,120 @@ namespace WebAPI.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, $"Greška servera: {ex.Message}");
+            }
+        }
+
+        [HttpPost("{id}/generisi-token")]
+        public async Task<IActionResult> GenerisiTokenZaDeljenje(int id, [FromBody] ZahtevZaDeljenje zahtev)
+        {
+            try
+            {
+
+                int ulogovaniKorisnikId = DobaviIdUlogovanogKorisnika();
+                var plan = await _travelDataServiceProxy.GetPlanPutovanjaSaDetaljimaAsync(ulogovaniKorisnikId);
+                if (plan == null) return Forbid("Plan putovanja nije pronađen ili nemate pristup.");
+
+                if (zahtev.NivoPristupa != "VIEW" && zahtev.NivoPristupa != "EDIT")
+                {
+                    return BadRequest("Nivo pristupa mora biti 'VIEW' ili 'EDIT'.");
+                }
+
+                //token samo za deljenje
+                var tajniKljuc = "OvoJeTajniKljucZaGenerisanjeTokenaKojiTrebaDaBudeDugacakMinimum32Karaktera"; // ne bi trebalo da se hardkoduje, ali za primer je ok
+                var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(tajniKljuc));
+                var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+                var claims = new[]
+                {
+                    new Claim("PlanId", id.ToString()),
+                    new Claim("NivoPristupa", zahtev.NivoPristupa),
+                    new Claim("TipTokena", "DeljenjePlana") // Dodatna zaštita da se osigura namena tokena
+                };
+
+                var token = new JwtSecurityToken(
+                    issuer: "TravelPlannerBackend",
+                    audience: "TravelPlannerFrontend",
+                    claims: claims,
+                    expires: DateTime.UtcNow.AddMinutes(zahtev.TrajanjeUMinutima),
+                    signingCredentials: creds
+                );
+
+                var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
+
+                return Ok(new { Token = tokenString });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Greška pri generisanju tokena: {ex.Message}");
+            }
+        }
+
+        [AllowAnonymous] // Omogućavamo pristup bez autentifikacije, jer korisnik može da dobije token od nekog ko je već ulogovan
+        [HttpGet("validiraj-deljenje/{token}")]
+        public async Task<IActionResult> ValidirajTokenZaDeljenje(string token)
+        {
+            try
+            {
+                var tajniKljuc = "OvoJeTajniKljucZaGenerisanjeTokenaKojiTrebaDaBudeDugacakMinimum32Karaktera";
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var key = Encoding.UTF8.GetBytes(tajniKljuc);
+
+                // Konfiguracija parametara za validaciju tokena
+                var validationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+                    ValidateIssuer = true,
+                    ValidIssuer = "TravelPlannerBackend",
+                    ValidateAudience = true,
+                    ValidAudience = "TravelPlannerFrontend",
+                    ValidateLifetime = true, // automatski proverava da li je trajanje linka isteklo
+                    ClockSkew = TimeSpan.Zero
+                };
+
+                // Validacija i čitanje claim-ova
+                SecurityToken validiraniToken;
+                var principal = tokenHandler.ValidateToken(token, validationParameters, out validiraniToken);
+
+                var tipTokenaClaim = principal.FindFirst("TipTokena")?.Value;
+                if (tipTokenaClaim != "DeljenjePlana")
+                {
+                    return BadRequest("Neispravan tip tokena.");
+                }
+
+                var planIdStr = principal.FindFirst("PlanId")?.Value;
+                var nivoPristupa = principal.FindFirst("NivoPristupa")?.Value;
+
+                if (string.IsNullOrEmpty(planIdStr) || string.IsNullOrEmpty(nivoPristupa))
+                {
+                    return BadRequest("Token ne sadrži sve potrebne informacije.");
+                }
+
+                int planId = int.Parse(planIdStr);
+
+                // Pozivamo proverenu metodu koja povlači specifičan plan sa svim detaljima
+                var plan = await _travelDataServiceProxy.GetPlanPutovanjaSaDetaljimaAsync(planId);
+
+                if (plan == null)
+                {
+                    return NotFound("Plan putovanja više ne postoji.");
+                }
+
+                // Vraćamo ceo plan i nivo pristupa na frontend kako bi se odmah prikazali podaci
+                return Ok(new
+                {
+                    Plan = plan,
+                    NivoPristupa = nivoPristupa,
+                    Poruka = "Token je validan."
+                });
+            }
+            catch (SecurityTokenExpiredException)
+            {
+                return BadRequest("Ovaj link za deljenje je istekao.");
+            }
+            catch (Exception)
+            {
+                return BadRequest("Neispravan ili modifikovan token za deljenje.");
             }
         }
     }

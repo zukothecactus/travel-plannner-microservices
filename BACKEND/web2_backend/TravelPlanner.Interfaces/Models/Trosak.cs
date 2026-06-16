@@ -11,8 +11,8 @@ namespace TravelPlanner.Interfaces.Models
     public class Trosak
     {
         public int Id { get; set; }
-        public string Kategorija { get; set; } // npr. Prevoz, Smeštaj, Hrana, Ulaznice
-        public string Opis { get; set; }
+        public string? Kategorija { get; set; } // npr. Prevoz, Smeštaj, Hrana, Ulaznice
+        public string? Opis { get; set; }
 
         // Iznos je double, prateći tvoju logiku za budžet
         public double Iznos { get; set; }

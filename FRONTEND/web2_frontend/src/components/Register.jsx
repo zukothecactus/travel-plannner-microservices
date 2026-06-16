@@ -3,34 +3,34 @@ import api from '../services/api';
 
 const Register = ({onPrebaciNaLogin}) =>
 {
-    const [ime, setIme] = useState('');
-    const [email, setEmail] = useState('');
-    const [lozinka, setLozinka] = useState('');
-    const [status, setStatus] = useState({ tip: '', poruka: '' });
-};
+  const [ime, setIme] = useState('');
+  const [email, setEmail] = useState('');
+  const [lozinka, setLozinka] = useState('');
+  const [status, setStatus] = useState({ tip: '', poruka: '' });
 
-const handleSubmit = async(e) =>
-{
-    e.preventDefault();
-    setStatus({tip: 'info', poruka: 'Registracija u toku...'});
-    try{
-        await api.post('/Auth/registracija', 
-            {
-                Ime: ime,
-                Email: email,
-                Lozinka: lozinka
-            }
-        );
-        setStatus({tip: 'success', poruka: 'Registracija uspešna!'});
-        //posle 2 sekunde prebacujemo korisnika na login 
-        setTimeout(() => {OnPrebaciNaLogin();}, 2000);
+  const handleSubmit = async(e) =>
+  {
+      e.preventDefault();
+      setStatus({tip: 'info', poruka: 'Registracija u toku...'});
+      try{
+          await api.post('/Auth/registracija', 
+              {
+                  Ime: ime,
+                  Email: email,
+                  Lozinka: lozinka
+              }
+          );
+          setStatus({tip: 'success', poruka: 'Registracija uspešna!'});
+          //posle 2 sekunde prebacujemo korisnika na login 
+          setTimeout(() => {OnPrebaciNaLogin();}, 2000);
 
-    } catch (error) {
-        setStatus({
-            tip: 'error', 
-            poruka: 'Greška prilikom registracije.'
-        });
-    }
+      } catch (error) {
+          setStatus({
+              tip: 'error', 
+              poruka: 'Greška prilikom registracije.'
+          });
+      }
+  };
 
 return (
     <div style={{ background: '#242424', padding: '30px', borderRadius: '8px', maxWidth: '400px', margin: '50px auto' }}>

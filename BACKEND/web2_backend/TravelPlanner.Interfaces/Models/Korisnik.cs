@@ -23,6 +23,6 @@ namespace TravelPlanner.Interfaces.Models
         public string LozinkaHash { get; set; } // Ovde ide BCrypt hešovana lozinka, nikako čist tekst!
 
         [Required]
-        public string Uloga { get; set; } = "KORISNIK"; // Može biti "KORISNIK" ili "ADMIN"
+        public string Uloga { get; set; } = "KORISNIK"; // Može biti "KORISNIK" ili "ADMIN", al kao neka bude default korisnik
     }
 }

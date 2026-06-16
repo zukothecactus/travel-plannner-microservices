@@ -11,8 +11,8 @@ namespace TravelPlanner.Interfaces.Models
     public class Destinacija
     {
         public int Id { get; set; }
-        public string NazivMesta { get; set; }
-        public string Napomena { get; set; }
+        public string? NazivMesta { get; set; }
+        public string? Napomena { get; set; }
         public DateTime DatumDolaska { get; set; }
         public DateTime DatumOdlaska { get; set; }
 
