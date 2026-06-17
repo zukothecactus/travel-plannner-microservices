@@ -49,6 +49,10 @@ function App() {
   const [trosakOpis, setTrosakOpis] = useState('');
   const [trosakIznos, setTrosakIznos] = useState('');
 
+  const [selektovanaKategorija, setSelektovanaKategorija] = useState('Svi troskovi');
+  const kategorije = ['Svi troskovi', 'Smeštaj', 'Prevoz', 'Hrana', 'Ostalo'];
+
+
   const { token, korisnik } = useSelector((state) => state.auth);
   const { podaci, trenutniBudzet, ucitava, greska } = useSelector((state) => state.plan);
 
@@ -146,6 +150,11 @@ const handleSacuvajTrosak = (id) => {
   }));
   setIzmenaTroskaId(null);
 };
+
+const sviTroskovi = podaci?.troskovi || [];
+const prikazaniTroskovi = selektovanaKategorija === 'Svi troskovi' 
+    ? sviTroskovi
+    : sviTroskovi.filter(t => t.kategorija?.toLowerCase() === selektovanaKategorija.toLowerCase());
 
   return (
     <div className="app-container">
@@ -354,60 +363,90 @@ const handleSacuvajTrosak = (id) => {
               <div style={{ marginTop: '40px', marginBottom: '50px' }}>
                 <h2 style={{ color: 'var(--venice-blue)' }}>💰 Troškovi</h2>
                 <DodajTrosak planId={podaci.id} />
-
-                {podaci.troskovi && podaci.troskovi.map((trosak) => (
-                  <div key={trosak.id} className="flex-between" style={{ padding: '10px 0', borderBottom: '1px solid var(--border-color)' }}>
-                    {izmenaTroskaId === trosak.id ? (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                          <input type="text" className="input-field" style={{ flex: 1 }} value={trosakKategorija} onChange={(e) => setTrosakKategorija(e.target.value)} placeholder="Kategorija" />
-                          <input type="number" className="input-field" style={{ width: '100px' }} value={trosakIznos} onChange={(e) => setTrosakIznos(e.target.value)} placeholder="Iznos" />
-                        </div>
-                        <input type="text" className="input-field" value={trosakOpis} onChange={(e) => setTrosakOpis(e.target.value)} placeholder="Opis troška" />
-                        <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
-                          <button onClick={() => setIzmenaTroskaId(null)} className="btn btn-outline" style={{ padding: '2px 8px', fontSize: '12px' }}>Otkaži</button>
-                          <button onClick={() => handleSacuvajTrosak(trosak.id)} className="btn btn-primary" style={{ padding: '2px 8px', fontSize: '12px' }}>Sačuvaj</button>
-                        </div>
-                      </div>
-                    ) : (
-                      <>
-                        <div>
-                          <span style={{ fontWeight: 500 }}>{trosak.kategorija}</span>
-                          {trosak.opis && <span className="text-muted" style={{ fontSize: '13px', marginLeft: '8px' }}>({trosak.opis})</span>}
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                          <strong style={{ color: 'var(--danger)' }}>-{trosak.iznos} RSD</strong>
-                          <div style={{ display: 'flex', gap: '4px' }}>
-                            <button 
-                              onClick={() => pokreniIzmenuTroska(trosak)}
-                              className="btn"
-                              style={{ background: 'transparent', color: 'var(--text-muted)', padding: '4px', fontSize: '15px' }}
-                              onMouseOver={(e) => e.target.style.color = 'var(--accent-primary)'}
-                              onMouseOut={(e) => e.target.style.color = 'var(--text-muted)'}
-                              title="Izmeni trošak"
-                            >
-                              ✏
-                            </button>
-                            <button 
-                              onClick={() => {
-                                if(window.confirm('Obriši ovaj trošak?')) {
-                                  dispatch(obrisiTrosak({ trosakId: trosak.id, planId: podaci.id, iznos: trosak.iznos }));
-                                }
-                              }}
-                              className="btn"
-                              style={{ background: 'transparent', color: 'var(--text-muted)', padding: '4px', fontSize: '15px' }}
-                              onMouseOver={(e) => e.target.style.color = 'var(--danger)'}
-                              onMouseOut={(e) => e.target.style.color = 'var(--text-muted)'}
-                              title="Obriši trošak"
-                            >
-                              ✖
-                            </button>
+                
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '15px', flexWrap: 'wrap' }}>
+                  {kategorije.map(kat => (
+                      <button
+                          key={kat}
+                          onClick={() => setSelektovanaKategorija(kat)}
+                          style={{
+                              padding: '6px 14px',
+                              borderRadius: '20px',
+                              border: '1px solid var(--accent-primary)',
+                              background: selektovanaKategorija === kat ? 'var(--accent-primary)' : 'transparent',
+                              color: selektovanaKategorija === kat ? 'white' : 'var(--accent-primary)',
+                              cursor: 'pointer',
+                              fontSize: '13px',
+                              transition: 'all 0.2s'
+                          }}
+                      >
+                          {kat}
+                      </button>
+                  ))}
+              </div>
+                {prikazaniTroskovi && prikazaniTroskovi.length>0 ? (
+                  <div>
+                    {prikazaniTroskovi.map((trosak) => (
+                      <div key={trosak.id} className="flex-between" style={{ padding: '10px 0', borderBottom: '1px solid var(--border-color)' }}>
+                        {izmenaTroskaId === trosak.id ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                              <input type="text" className="input-field" style={{ flex: 1 }} value={trosakKategorija} onChange={(e) => setTrosakKategorija(e.target.value)} placeholder="Kategorija" />
+                              <input type="number" className="input-field" style={{ width: '100px' }} value={trosakIznos} onChange={(e) => setTrosakIznos(e.target.value)} placeholder="Iznos" />
+                            </div>
+                            <input type="text" className="input-field" value={trosakOpis} onChange={(e) => setTrosakOpis(e.target.value)} placeholder="Opis troška" />
+                            <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
+                              <button onClick={() => setIzmenaTroskaId(null)} className="btn btn-outline" style={{ padding: '2px 8px', fontSize: '12px' }}>Otkaži</button>
+                              <button onClick={() => handleSacuvajTrosak(trosak.id)} className="btn btn-primary" style={{ padding: '2px 8px', fontSize: '12px' }}>Sačuvaj</button>
+                            </div>
                           </div>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                ))}
+                        ) : (
+                          <>
+                            <div>
+                              <span style={{ fontWeight: 500 }}>{trosak.kategorija}</span>
+                              {trosak.opis && <span className="text-muted" style={{ fontSize: '13px', marginLeft: '8px' }}>({trosak.opis})</span>}
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                              <strong style={{ color: 'var(--danger)' }}>-{trosak.iznos} RSD</strong>
+                              <div style={{ display: 'flex', gap: '4px' }}>
+                                <button 
+                                  onClick={() => pokreniIzmenuTroska(trosak)}
+                                  className="btn"
+                                  style={{ background: 'transparent', color: 'var(--text-muted)', padding: '4px', fontSize: '15px' }}
+                                  onMouseOver={(e) => e.target.style.color = 'var(--accent-primary)'}
+                                  onMouseOut={(e) => e.target.style.color = 'var(--text-muted)'}
+                                  title="Izmeni trošak"
+                                >
+                                  ✏
+                                </button>
+                                <button 
+                                  onClick={() => {
+                                    if(window.confirm('Obriši ovaj trošak?')) {
+                                      dispatch(obrisiTrosak({ trosakId: trosak.id, planId: podaci.id, iznos: trosak.iznos }));
+                                    }
+                                  }}
+                                  className="btn"
+                                  style={{ background: 'transparent', color: 'var(--text-muted)', padding: '4px', fontSize: '15px' }}
+                                  onMouseOver={(e) => e.target.style.color = 'var(--danger)'}
+                                  onMouseOut={(e) => e.target.style.color = 'var(--text-muted)'}
+                                  title="Obriši trošak"
+                                >
+                                  ✖
+                                </button>
+                              </div>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    ))}
+                    </div>
+                ) :(
+                  <p className="text-muted" style={{ fontStyle: 'italic' }}>
+                    {selektovanaKategorija === 'Svi troškovi' 
+                      ? 'Nema evidentiranih troškova.' 
+                      : `Nema troškova u kategoriji: ${selektovanaKategorija}`}
+                  </p>
+                )}
               </div>
               
               {/* Modal za generisanje linka */}
