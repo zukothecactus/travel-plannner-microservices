@@ -40,5 +40,22 @@ namespace WebAPI.Controllers // Promeni u svoj namespace
             }
             return BadRequest("Greška pri brisanju korisnika. Korisnik možda ne postoji.");
         }
+
+        [HttpPut("korisnici/{id}/uloga")]
+        public async Task<IActionResult> PromeniUlogu(int id, [FromBody] string novaUloga)
+        {
+            // Opciono: Dodaj validaciju da novaUloga mora biti "ADMIN" ili "KORISNIK"
+            if (novaUloga != "ADMIN" && novaUloga != "KORISNIK")
+            {
+                return BadRequest("Nepoznata uloga.");
+            }
+
+            var uspesno = await _travelDataServiceProxy.PromeniUloguKorisnikaAsync(id, novaUloga);
+            if (uspesno)
+            {
+                return Ok(new { Poruka = "Uloga uspešno promenjena." });
+            }
+            return BadRequest("Greška pri promeni uloge.");
+        }
     }
 }

@@ -37,6 +37,27 @@ const AdminPanel = () => {
         }
     };
 
+    const promeniUlogu = async (korisnik) => {
+        const novaUloga = korisnik.uloga === 'ADMIN' ? 'KORISNIK' : 'ADMIN';
+        
+        if(!window.confirm(`Da li sigurno želiš da postaviš ${korisnik.ime} u ulogu: ${novaUloga}?`)) {
+            return;
+        }
+
+        try {
+            // Obavezno šaljemo string kao JSON body
+            await api.put(`/Admin/korisnici/${korisnik.id}/uloga`, JSON.stringify(novaUloga), {
+                headers: { 'Content-Type': 'application/json' }
+            });
+            
+            // Lokalno osvežavanje state-a da korisnik odmah vidi promenu
+            setKorisnici(korisnici.map(k => k.id === korisnik.id ? { ...k, uloga: novaUloga } : k));
+            alert('Uloga uspešno promenjena.');
+        } catch (error) {
+            alert('Greška pri promeni uloge.');
+        }
+    };
+
     if (ucitava) return <p className="text-muted" style={{ textAlign: 'center', marginTop: '30px' }}>Učitavanje korisnika...</p>;
     if (greska) return <div style={{ padding: '15px', background: '#fee2e2', color: 'var(--danger)', borderRadius: '8px', textAlign: 'center', marginTop: '20px' }}>{greska}</div>;
 
@@ -67,6 +88,19 @@ const AdminPanel = () => {
                                     </span>
                                 </td>
                                 <td style={{ padding: '12px 10px', textAlign: 'right' }}>
+                                    <button 
+                                        onClick={() => promeniUlogu(korisnik)}
+                                        className="btn btn-outline"
+                                        style={{ 
+                                            padding: '6px 12px', 
+                                            fontSize: '13px', 
+                                            marginRight: '8px',
+                                            borderColor: 'var(--mystic-blue)',
+                                            color: 'var(--mystic-blue)' 
+                                        }}
+                                    >
+                                        {korisnik.uloga === 'ADMIN' ? 'Postavi kao KORISNIK' : 'Postavi kao ADMIN'}
+                                    </button>
                                     {korisnik.uloga !== 'ADMIN' && (
                                         <button 
                                             onClick={() => obrisiKorisnika(korisnik.id, korisnik.ime)}

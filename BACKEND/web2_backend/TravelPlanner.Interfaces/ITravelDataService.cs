@@ -35,5 +35,7 @@ namespace TravelPlanner.Interfaces
         Task<bool> AzurirajDestinacijuAsync(Destinacija destinacija);
         Task<bool> AzurirajTrosakAsync(Trosak trosak);
 
+        Task<bool> PromeniUloguKorisnikaAsync(int korisnikId, string novaUloga);
+
     }
 }

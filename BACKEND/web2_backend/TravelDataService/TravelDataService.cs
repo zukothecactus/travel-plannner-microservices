@@ -304,6 +304,21 @@ namespace TravelDataService
             }
         }
 
+        public async Task<bool> PromeniUloguKorisnikaAsync(int korisnikId, string novaUloga)
+        {
+            using (var context = new TravelDbContext())
+            {
+                var korisnik = await context.Korisnici.FindAsync(korisnikId);
+                if (korisnik != null && korisnik.Id != 3) // ne menjamo ulogu glavnog admina
+                {
+                    korisnik.Uloga = novaUloga;
+                    await context.SaveChangesAsync();
+                    return true;
+                }
+                return false;
+            }
+        }
+
         public Task<string> PingAsync()
         {
             return Task.FromResult("Pozdrav od TravelData servisa! Remoting radi besprekorno.");
