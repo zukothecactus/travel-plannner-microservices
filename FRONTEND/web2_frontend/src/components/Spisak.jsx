@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { dodajNaSpisak, toggleZavrseno, obrisiSaSpiska } from '../store/planSlice';
 
-// Dodali smo prop 'samoPregled' sa podrazumevanom vrednošću false
 const Spisak = ({ planId, stavke = [], samoPregled = false }) => {
   const dispatch = useDispatch();
   
@@ -23,63 +22,64 @@ const Spisak = ({ planId, stavke = [], samoPregled = false }) => {
   };
 
   return (
-    <div style={{ background: '#1a1a1a', borderRadius: '8px', border: '1px solid #444', marginTop: '20px' }}>
+    <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
       
       <div 
         onClick={() => setOtvoreno(!otvoreno)} 
-        style={{ padding: '15px', display: 'flex', justifyContent: 'space-between', cursor: 'pointer' }}
+        className="flex-between"
+        style={{ padding: '16px 20px', cursor: 'pointer', background: 'var(--bg-main)', borderBottom: otvoreno ? '1px solid var(--border-color)' : 'none' }}
       >
-        <h3 style={{ margin: 0 }}>📝 To-Do Spisak ({stavke.length})</h3>
-        <span>{otvoreno ? '▲' : '▼'}</span>
+        <h3 style={{ margin: 0, fontSize: '18px' }}>📝 To-Do Spisak ({stavke.length})</h3>
+        <span style={{ color: 'var(--text-muted)' }}>{otvoreno ? '▲' : '▼'}</span>
       </div>
 
       {otvoreno && (
-        <div style={{ padding: '15px', borderTop: '1px solid #444' }}>
+        <div style={{ padding: '20px' }}>
           
-          {/* Prikazujemo formu za dodavanje SAMO ako nismo u modu samo za pregled */}
           {!samoPregled && (
-            <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
+            <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
               <input 
                 type="text" 
+                className="input-field"
                 placeholder="Dodaj novu stavku..." 
                 value={noviZadatak} 
                 onChange={(e) => setNoviZadatak(e.target.value)}
-                style={{ flex: 1 }} 
+                style={{ marginBottom: 0 }} 
               />
-              <button type="submit" style={{ background: '#4CAF50', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '4px' }}>
+              <button type="submit" className="btn btn-primary">
                 Dodaj
               </button>
             </form>
           )}
 
           {stavke.length > 0 ? (
-            <ul style={{ listStyleType: 'none', padding: 0 }}>
+            <ul style={{ listStyleType: 'none', padding: 0, margin: 0 }}>
               {stavke.map((stavka) => (
-                <li key={stavka.id} style={{ display: 'flex', justifyContent: 'space-between', background: '#2a2a2a', padding: '10px', marginBottom: '5px', borderRadius: '4px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <li key={stavka.id} className="flex-between" style={{ padding: '10px 0', borderBottom: '1px solid var(--border-color)' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: samoPregled ? 'default' : 'pointer' }}>
                     <input 
                       type="checkbox" 
                       checked={stavka.jeZavrseno}
-                      // Zaključavamo checkbox ako je u pitanju samo pregled
                       disabled={samoPregled} 
                       onChange={() => dispatch(toggleZavrseno({ stavkaId: stavka.id, planId }))}
-                      style={{ cursor: samoPregled ? 'not-allowed' : 'pointer', width: '20px', height: '20px' }}
+                      style={{ width: '18px', height: '18px', accentColor: 'var(--accent-primary)' }}
                     />
                     <span style={{ 
                       textDecoration: stavka.jeZavrseno ? 'line-through' : 'none', 
-                      color: stavka.jeZavrseno ? '#888' : '#fff',
-                      fontSize: '16px'
+                      color: stavka.jeZavrseno ? 'var(--text-muted)' : 'var(--text-main)',
+                      fontSize: '15px'
                     }}>
                       {stavka.tekst}
                     </span>
-                  </div>
+                  </label>
 
-                  {/* Dugme za brisanje prikazujemo SAMO ako nismo u modu samo za pregled */}
                   {!samoPregled && (
                     <button 
                       onClick={() => dispatch(obrisiSaSpiska({ stavkaId: stavka.id, planId }))}
-                      style={{ background: 'transparent', color: '#ff4d4d', border: 'none', cursor: 'pointer', fontSize: '16px' }}
+                      style={{ background: 'transparent', color: 'var(--text-muted)', border: 'none', cursor: 'pointer', padding: '4px' }}
                       title="Obriši stavku"
+                      onMouseOver={(e) => e.target.style.color = 'var(--danger)'}
+                      onMouseOut={(e) => e.target.style.color = 'var(--text-muted)'}
                     >
                       ✖
                     </button>
@@ -88,7 +88,7 @@ const Spisak = ({ planId, stavke = [], samoPregled = false }) => {
               ))}
             </ul>
           ) : (
-            <p style={{ color: '#888', fontStyle: 'italic' }}>Spisak je trenutno prazan.</p>
+            <p className="text-muted" style={{ fontStyle: 'italic', margin: 0 }}>Spisak je trenutno prazan.</p>
           )}
         </div>
       )}

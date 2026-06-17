@@ -11,5 +11,6 @@ namespace TravelPlanner.Interfaces
     {
         Task<double> DodajTrosakUBudzetAsync(int planId, double iznos);
         Task<double> DobaviUkupnuPotrosnjuAsync(int planId);
+        Task InvalidirajKesBudzetaAsync(int planId);
     }
 }

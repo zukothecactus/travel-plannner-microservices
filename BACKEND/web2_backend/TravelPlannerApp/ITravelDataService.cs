@@ -29,11 +29,5 @@ namespace TravelPlanner.Interfaces
 
         Task<double> DobaviSumuTroskovaZaPlanAsync(int planId);
         Task<bool> ObrisiDestinacijuAsync(int destinacijaId);
-
-        Task<bool> AzurirajPlanPutovanjaAsync(PlanPutovanja plan);
-
-        Task<bool> AzurirajDestinacijuAsync(Destinacija destinacija);
-        Task<bool> AzurirajTrosakAsync(Trosak trosak);
-
     }
 }

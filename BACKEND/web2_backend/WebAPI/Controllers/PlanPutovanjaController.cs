@@ -381,5 +381,48 @@ namespace WebAPI.Controllers
 
             }
         }
+
+        [HttpPut("{id}")]
+        public async Task<IActionResult> IzmeniPlan(int id, [FromBody] PlanPutovanja plan)
+        {
+            if (id != plan.Id) return BadRequest("ID plana se ne poklapa.");
+
+            var uspesno = await _travelDataServiceProxy.AzurirajPlanPutovanjaAsync(plan);
+            if (uspesno)
+            {
+                return Ok(new { Poruka = "Plan putovanja uspešno izmenjen." });
+            }
+            return BadRequest("Greška prilikom izmene plana.");
+        }
+
+        [HttpPut("destinacija/{id}")]
+        public async Task<IActionResult> IzmeniDestinaciju(int id, [FromBody] Destinacija destinacija)
+        {
+            if (id != destinacija.Id) return BadRequest("ID destinacije se ne poklapa.");
+
+            var uspesno = await _travelDataServiceProxy.AzurirajDestinacijuAsync(destinacija);
+            if (uspesno)
+            {
+                return Ok(new { Poruka = "Destinacija uspešno izmenjena." });
+            }
+            return BadRequest("Greška prilikom izmene destinacije.");
+        }
+
+        [HttpPut("trosak/{id}")]
+        public async Task<IActionResult> IzmeniTrosak(int id, [FromBody] Trosak trosak)
+        {
+            if (id != trosak.Id) return BadRequest("ID troška se ne poklapa.");
+
+            var uspesno = await _travelDataServiceProxy.AzurirajTrosakAsync(trosak);
+            if (uspesno)
+            {
+                // VAŽNO: Pozivamo Stateful servis da obriše stari keš budžeta za ovaj plan
+                // Ovde pozovi proxy svog SharingAndBudgetService-a:
+                // await _budgetServiceProxy.InvalidirajKešBudžetaAsync(trosak.PlanPutovanjaId);
+
+                return Ok(new { Poruka = "Trošak uspešno izmenjen." });
+            }
+            return BadRequest("Greška prilikom izmene troška.");
+        }
     }
 }

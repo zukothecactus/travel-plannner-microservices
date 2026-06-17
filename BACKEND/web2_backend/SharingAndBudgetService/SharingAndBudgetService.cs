@@ -78,6 +78,18 @@ namespace SharingAndBudgetService
             }
         }
 
+        //Kada se ključ obriše, sledeći poziv ka tom servisu će automatski izračunati novu vrednost iz baze.
+        //treba nam kada promenimo budzet u TravelDataService, da bi se keš invalidirao i sledeći put kada se pozove metoda DobaviUkupnuPotrosnjuAsync, da se iz baze ponovo izračuna.
+        public async Task InvalidirajKesBudzetaAsync(int planId)
+        {
+            var budzeti = await this.StateManager.GetOrAddAsync<IReliableDictionary<int, double>>("budzetRecnik");
+            using (var tx = this.StateManager.CreateTransaction())
+            {
+                await budzeti.TryRemoveAsync(tx, planId);
+                await tx.CommitAsync();
+            }
+        }
+
         /// <summary>
         /// Optional override to create listeners (e.g., HTTP, Service Remoting, WCF, etc.) for this service replica to handle client or user requests.
         /// </summary>

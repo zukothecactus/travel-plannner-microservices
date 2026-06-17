@@ -253,6 +253,57 @@ namespace TravelDataService
             }
         }
 
+        public async Task<bool> AzurirajPlanPutovanjaAsync(PlanPutovanja izmenjeniPlan)
+        {
+            using (var context = new TravelDbContext())
+            {
+                var postojeciPlan = await context.PlanoviPutovanja.FindAsync(izmenjeniPlan.Id);
+                if (postojeciPlan == null) return false;
+
+                // Menjamo samo dozvoljena polja
+                postojeciPlan.Naziv = izmenjeniPlan.Naziv;
+                postojeciPlan.Opis = izmenjeniPlan.Opis;
+                postojeciPlan.PlaniraniBudzet = izmenjeniPlan.PlaniraniBudzet;
+
+                await context.SaveChangesAsync();
+                return true;
+            }
+        }
+
+        public async Task<bool> AzurirajDestinacijuAsync(Destinacija izmenjenaDestinacija)
+        {
+            using (var context = new TravelDbContext())
+            {
+                var postojecaDestinacija = await context.Destinacije.FindAsync(izmenjenaDestinacija.Id);
+                if (postojecaDestinacija == null) return false;
+
+                postojecaDestinacija.NazivMesta = izmenjenaDestinacija.NazivMesta;
+                postojecaDestinacija.Napomena = izmenjenaDestinacija.Napomena;
+                postojecaDestinacija.DatumDolaska = izmenjenaDestinacija.DatumDolaska;
+                postojecaDestinacija.DatumOdlaska = izmenjenaDestinacija.DatumOdlaska;
+
+                await context.SaveChangesAsync();
+                return true;
+            }
+        }
+
+        public async Task<bool> AzurirajTrosakAsync(Trosak izmenjeniTrosak)
+        {
+            using (var context = new TravelDbContext())
+            {
+                var postojeciTrosak = await context.Troskovi.FindAsync(izmenjeniTrosak.Id);
+                if (postojeciTrosak == null) return false;
+
+                postojeciTrosak.Kategorija = izmenjeniTrosak.Kategorija;
+                postojeciTrosak.Opis = izmenjeniTrosak.Opis;
+                postojeciTrosak.Iznos = izmenjeniTrosak.Iznos;
+                postojeciTrosak.Datum = izmenjeniTrosak.Datum;
+
+                await context.SaveChangesAsync();
+                return true;
+            }
+        }
+
         public Task<string> PingAsync()
         {
             return Task.FromResult("Pozdrav od TravelData servisa! Remoting radi besprekorno.");

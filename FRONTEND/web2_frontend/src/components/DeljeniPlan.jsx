@@ -8,7 +8,6 @@ import Spisak from './Spisak';
 const DeljeniPlan = ({ token }) => {
   const dispatch = useDispatch();
   
-  // Povlačimo podatke o deljenom planu iz Redux stanja
   const { deljeniPlan, nivoPristupaDeljenog, deljenjeUcitava, deljenjeGreska } = useSelector((state) => state.plan);
 
   useEffect(() => {
@@ -18,15 +17,15 @@ const DeljeniPlan = ({ token }) => {
   }, [dispatch, token]);
 
   if (deljenjeUcitava) {
-    return <div style={{ textAlign: 'center', marginTop: '50px' }}>Učitavanje deljenog plana putovanja...</div>;
+    return <div style={{ textAlign: 'center', marginTop: '50px', color: 'var(--text-muted)' }}>Učitavanje deljenog plana putovanja...</div>;
   }
 
   if (deljenjeGreska) {
     return (
-      <div style={{ textAlign: 'center', marginTop: '50px', color: '#ff4d4d' }}>
-        <h2>Greška pri pristupu</h2>
-        <p>{typeof deljenjeGreska === 'string' ? deljenjeGreska : 'Link je nevalidan ili je istekao.'}</p>
-        <button onClick={() => window.location.href = '/'} style={{ background: '#646cff', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer', marginTop: '15px' }}>
+      <div className="card" style={{ textAlign: 'center', marginTop: '50px', maxWidth: '500px', margin: '50px auto' }}>
+        <h2 style={{ color: 'var(--danger)' }}>Greška pri pristupu</h2>
+        <p className="text-muted">{typeof deljenjeGreska === 'string' ? deljenjeGreska : 'Link je nevalidan ili je istekao.'}</p>
+        <button onClick={() => window.location.href = '/'} className="btn btn-primary" style={{ marginTop: '15px' }}>
           Idi na početnu
         </button>
       </div>
@@ -38,48 +37,45 @@ const DeljeniPlan = ({ token }) => {
   const jeEditMod = nivoPristupaDeljenog === 'EDIT';
 
   return (
-    <div style={{ maxWidth: '800px', margin: '0 auto', padding: '20px', textAlign: 'left' }}>
-      <button onClick={() => window.location.href = '/'} style={{ background: '#333', color: 'white', border: '1px solid #555', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer', marginBottom: '20px' }}>
-        ⬅️ Nazad na početnu
+    <div className="app-container">
+      <button onClick={() => window.location.href = '/'} className="btn btn-outline" style={{ marginBottom: '20px' }}>
+        ⬅ Nazad na početnu
       </button>
 
-      <div style={{ background: '#242424', padding: '30px', borderRadius: '12px', border: '1px solid #646cff', marginBottom: '30px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h1>{deljeniPlan.naziv}</h1>
-          <span style={{ background: jeEditMod ? '#ff9800' : '#4CAF50', color: 'white', padding: '5px 10px', borderRadius: '12px', fontSize: '14px', fontWeight: 'bold' }}>
-            Nivo pristupa: {nivoPristupaDeljenog}
+      <div className="card">
+        <div className="flex-between">
+          <h1 style={{ margin: 0 }}>{deljeniPlan.naziv}</h1>
+          <span className={`badge ${jeEditMod ? 'badge-edit' : 'badge-view'}`}>
+            Pristup: {nivoPristupaDeljenog}
           </span>
         </div>
-        <p style={{ color: '#aaa', fontSize: '16px', marginTop: '10px' }}>{deljeniPlan.opis}</p>
-        <h3 style={{ marginTop: '20px', color: '#4CAF50' }}>Planirani budžet: {deljeniPlan.planiraniBudzet} EUR</h3>
+        <p className="text-muted" style={{ fontSize: '16px', marginTop: '10px' }}>{deljeniPlan.opis}</p>
+        <h3 style={{ marginTop: '20px', color: 'var(--success)' }}>Budžet: {deljeniPlan.planiraniBudzet} RSD</h3>
       </div>
 
-      {/* To-Do Spisak - prikazujemo ga svima, ali unutrašnja logika može zavisiti od prava izmena */}
       <Spisak planId={deljeniPlan.id} stavke={deljeniPlan.spisak} samoPregled={!jeEditMod} />
 
-      {/* Sekcija za Destinacije */}
       <div style={{ marginTop: '30px' }}>
         <h2>📍 Destinacije</h2>
         {jeEditMod && <DodajDestinaciju planId={deljeniPlan.id} />}
         
         {deljeniPlan.destinacije && deljeniPlan.destinacije.length > 0 ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '15px' }}>
+          <div style={{ marginTop: '15px' }}>
             {deljeniPlan.destinacije.map((dest) => (
-              <div key={dest.id} style={{ background: '#1a1a1a', padding: '15px', borderRadius: '8px', border: '1px solid #444' }}>
-                <h4>{dest.nazivMesta}</h4>
-                <p style={{ fontSize: '14px', color: '#888' }}>
-                  {new Date(dest.datumDolaska).toLocaleDateString()} - {new Date(dest.datumOdlaska).toLocaleDateString()}
+              <div key={dest.id} className="card-item">
+                <h4 style={{ margin: '0 0 4px 0' }}>{dest.nazivMesta}</h4>
+                <p className="text-muted" style={{ margin: 0 }}>
+                  {new Date(dest.datumDolaska).toLocaleDateString('sr-RS')} - {new Date(dest.datumOdlaska).toLocaleDateString('sr-RS')}
                 </p>
-                {dest.napomena && <p style={{ fontStyle: 'italic', fontSize: '14px', marginTop: '5px' }}>Napomena: {dest.napomena}</p>}
+                {dest.napomena && <p className="text-muted" style={{ fontStyle: 'italic', marginTop: '8px', marginBottom: 0 }}>Napomena: {dest.napomena}</p>}
               </div>
             ))}
           </div>
         ) : (
-          <p style={{ color: '#666', fontStyle: 'italic', marginTop: '10px' }}>Nema dodatih destinacija.</p>
+          <p className="text-muted" style={{ fontStyle: 'italic' }}>Nema dodatih destinacija.</p>
         )}
       </div>
 
-      {/* Sekcija za Troškove */}
       <div style={{ marginTop: '40px', marginBottom: '50px' }}>
         <h2>💰 Troškovi</h2>
         {jeEditMod && <DodajTrosak planId={deljeniPlan.id} />}
@@ -87,16 +83,16 @@ const DeljeniPlan = ({ token }) => {
         {deljeniPlan.troskovi && deljeniPlan.troskovi.length > 0 ? (
           <ul style={{ listStyleType: 'none', padding: 0, marginTop: '15px' }}>
             {deljeniPlan.troskovi.map((trosak) => (
-              <li key={trosak.id} style={{ background: '#333', padding: '12px', marginBottom: '8px', borderRadius: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <li key={trosak.id} className="card-item flex-between" style={{ padding: '12px 16px' }}>
                 <div>
-                  <strong>{trosak.kategorija}</strong> - {trosak.opis}
+                  <strong>{trosak.kategorija}</strong> - <span className="text-muted">{trosak.opis}</span>
                 </div>
-                <span style={{ color: '#ff4d4d', fontWeight: 'bold' }}>{trosak.iznos} EUR</span>
+                <span style={{ color: 'var(--text-main)', fontWeight: 'bold' }}>{trosak.iznos} RSD</span>
               </li>
             ))}
           </ul>
         ) : (
-          <p style={{ color: '#666', fontStyle: 'italic', marginTop: '10px' }}>Nema evidentiranih troškova.</p>
+          <p className="text-muted" style={{ fontStyle: 'italic' }}>Nema evidentiranih troškova.</p>
         )}
       </div>
     </div>

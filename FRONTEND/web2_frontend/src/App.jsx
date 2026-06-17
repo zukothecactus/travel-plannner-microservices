@@ -1,6 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { dobaviPlan, dobaviPotrosnju, obrisiTrosak, resetujGenerisaniToken, obrisiDestinaciju } from './store/planSlice';
+import { 
+  dobaviPlan, 
+  dobaviPotrosnju, 
+  obrisiTrosak, 
+  resetujGenerisaniToken, 
+  obrisiDestinaciju,
+  izmeniPlan,
+  izmeniDestinaciju,
+  izmeniTrosak
+} from './store/planSlice';
 import { logout } from './store/authSlice';
 import DodajTrosak from './components/DodajTrosak';
 import ListaPlanova from './components/ListaPlanova';
@@ -21,6 +30,25 @@ function App() {
   const [prikaziAdminPanel, setPrikaziAdminPanel] = useState(false);
   const [prikaziModalZaDeljenje, setPrikaziModalZaDeljenje] = useState(false);
   
+  // Stanja za izmenu osnovnih podataka plana putovanja
+  const [izmenaPlana, setIzmenaPlana] = useState(false);
+  const [planNaziv, setPlanNaziv] = useState('');
+  const [planOpis, setPlanOpis] = useState('');
+  const [planBudzet, setPlanBudzet] = useState('');
+
+  // Stanja za inline izmenu selektovane destinacije
+  const [izmenaDestinacijeId, setIzmenaDestinacijeId] = useState(null);
+  const [destinacijaMesto, setDestinacijaMesto] = useState('');
+  const [destinacijaNapomena, setDestinacijaNapomena] = useState('');
+  const [destinacijaDolazak, setDestinacijaDolazak] = useState('');
+  const [destinacijaOdlazak, setDestinacijaOdlazak] = useState('');
+
+  // Stanja za inline izmenu selektovanog troška
+  const [izmenaTroskaId, setIzmenaTroskaId] = useState(null);
+  const [trosakKategorija, setTrosakKategorija] = useState('');
+  const [trosakOpis, setTrosakOpis] = useState('');
+  const [trosakIznos, setTrosakIznos] = useState('');
+
   const { token, korisnik } = useSelector((state) => state.auth);
   const { podaci, trenutniBudzet, ucitava, greska } = useSelector((state) => state.plan);
 
@@ -29,213 +57,372 @@ function App() {
       dispatch(dobaviPlan(aktivniPlanId));
       dispatch(dobaviPotrosnju(aktivniPlanId));
     }
-  }, [dispatch, aktivniPlanId, token]);
+  }, [dispatch, token, aktivniPlanId]);
 
-  // Provera da li je korisnik došao preko QR koda / linka za deljenje
-const putanja = window.location.pathname; // npr. /deli/ovde_ide_token
-if (putanja.startsWith('/deli/')) {
-    // Izdvajamo token string iz URL-a
-    const urlTokenZaDeljenje = putanja.split('/deli/')[1];
+  // Rute za deljene planove
+  const putanja = window.location.pathname;
+  if (putanja.startsWith('/deli/')) {
+    const urlToken = putanja.split('/deli/')[1];
+    return <DeljeniPlan token={urlToken} />;
+  }
 
-    return (
-        <div className="app-container">
-            <DeljeniPlan token={urlTokenZaDeljenje} />
-        </div>
-    );
-}
-
+  // Prikaz login/registracije ukoliko korisnik nema token
   if (!token) {
-    return (
-      <div className="app-container">
-        <h1>🌍 Dobrodošli u Travel Planner</h1>
-        {prikaziLogin ? (
-          <Login onPrebaciNaRegistraciju={() => setPrikaziLogin(false)} />
-        ) : (
-          <Register onPrebaciNaLogin={() => setPrikaziLogin(true)} />
-        )}
-      </div>
+    return prikaziLogin ? (
+      <Login onPrebaciNaRegistraciju={() => setPrikaziLogin(false)} />
+    ) : (
+      <Register onPrebaciNaLogin={() => setPrikaziLogin(true)} />
     );
   }
 
+  const handleSavePlan = () => {
+    dispatch(izmeniPlan({
+      id: podaci.id,
+      naziv: noviNaziv,
+      opis: noviOpis,
+      planiraniBudzet: parseFloat(noviBudzet),
+      korisnikId: podaci.korisnikId
+    }));
+    setIsEditingPlan(false);
+  };
+
+  // Funkcije za izmenu Plana
+const pokreniIzmenuPlana = () => {
+  setPlanNaziv(podaci.naziv);
+  setPlanOpis(podaci.opis || '');
+  setPlanBudzet(podaci.planiraniBudzet);
+  setIzmenaPlana(true);
+};
+
+const handleSacuvajPlan = () => {
+  dispatch(izmeniPlan({
+    id: podaci.id,
+    naziv: planNaziv,
+    opis: planOpis,
+    planiraniBudzet: parseFloat(planBudzet),
+    korisnikId: podaci.korisnikId
+  }));
+  setIzmenaPlana(false);
+};
+
+// Funkcije za izmenu Destinacije
+const pokreniIzmenuDestinacije = (destinacija) => {
+  setIzmenaDestinacijeId(destinacija.id);
+  setDestinacijaMesto(destinacija.nazivMesta);
+  setDestinacijaNapomena(destinacija.napomena || '');
+  // Secemo string na YYYY-MM-DD format koji input type="date" zahteva
+  setDestinacijaDolazak(destinacija.datumDolaska.substring(0, 10));
+  setDestinacijaOdlazak(destinacija.datumOdlaska.substring(0, 10));
+};
+
+const handleSacuvajDestinaciju = (id) => {
+  dispatch(izmeniDestinaciju({
+    id,
+    nazivMesta: destinacijaMesto,
+    napomena: destinacijaNapomena,
+    datumDolaska: new Date(destinacijaDolazak).toISOString(),
+    datumOdlaska: new Date(destinacijaOdlazak).toISOString(),
+    planPutovanjaId: podaci.id
+  }));
+  setIzmenaDestinacijeId(null);
+};
+
+// Funkcije za izmenu Troška
+const pokreniIzmenuTroska = (trosak) => {
+  setIzmenaTroskaId(trosak.id);
+  setTrosakKategorija(trosak.kategorija);
+  setTrosakOpis(trosak.opis || '');
+  setTrosakIznos(trosak.iznos);
+};
+
+const handleSacuvajTrosak = (id) => {
+  dispatch(izmeniTrosak({
+    id,
+    kategorija: trosakKategorija,
+    opis: trosakOpis,
+    iznos: parseFloat(trosakIznos),
+    planPutovanjaId: podaci.id,
+    datum: new Date().toISOString()
+  }));
+  setIzmenaTroskaId(null);
+};
+
   return (
     <div className="app-container">
-      {/* HEADER SA DUGMETOM ZA ODJAVU */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#1a1a1a', padding: '10px 20px', borderRadius: '8px', marginBottom: '20px' }}>
-        <h1 style={{ margin: 0, fontSize: '24px' }}>🌍 Moj Travel Planner</h1>
+      
+      {/* Glavno zaglavlje aplikacije (Header) */}
+      <div className="card flex-between" style={{ padding: '16px 24px', marginBottom: '30px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <span>Zdravo, <strong>{korisnik?.ime}</strong>!</span>
-          
-          {/* Prikazujemo dugme za Admin Panel samo ako je korisnik ADMIN */}
+          <h2 style={{ margin: 0, color: 'var(--venice-blue)' }}>Zdravo, {korisnik?.ime || 'Putniče'}! 👋</h2>
           {korisnik?.uloga === 'ADMIN' && (
             <button 
-              onClick={() => {
-                setPrikaziAdminPanel(!prikaziAdminPanel);
-                setAktivniPlanId(null); 
-              }}
-              style={{ background: '#ff9800', padding: '8px 15px', color: '#fff' }}
+              onClick={() => setPrikaziAdminPanel(!prikaziAdminPanel)}
+              className={prikaziAdminPanel ? "btn btn-primary" : "btn btn-outline"}
             >
               {prikaziAdminPanel ? 'Nazad na planove' : 'Admin Panel'}
             </button>
           )}
-
-          <button 
-            onClick={() => {
-              dispatch(logout());
-              setAktivniPlanId(null); 
-              setPrikaziAdminPanel(false); 
-            }} 
-            style={{ background: '#ff4d4d', padding: '8px 15px' }}
-          >
-            Odjavi se
-          </button>
+          
         </div>
+        <button 
+          onClick={() => { 
+            dispatch(logout()); 
+            setAktivniPlanId(null);
+            setPrikaziAdminPanel(false);
+          }}
+          className="btn btn-outline"
+          style={{ color: 'var(--danger)', borderColor: 'var(--danger)' }}
+          onMouseOver={(e) => { e.target.style.background = 'var(--danger)'; e.target.style.color = 'white'; }}
+          onMouseOut={(e) => { e.target.style.background = 'transparent'; e.target.style.color = 'var(--danger)'; }}
+        >
+          Odjavi se
+        </button>
       </div>
 
-      {/* GLAVNI SADRŽAJ (Admin Panel ili Planovi) */}
+      {/* Sadržaj ispod zaglavlja */}
       {prikaziAdminPanel ? (
         <AdminPanel />
+      ) : aktivniPlanId === null ? (
+        <ListaPlanova onIzaberiPlan={(id) => setAktivniPlanId(id)} />
       ) : (
-        <>
-          {aktivniPlanId === null ? (
-            <ListaPlanova onIzaberiPlan={(id) => setAktivniPlanId(id)} />
-          ) : (
+        <div>
+          <button 
+            onClick={() => setAktivniPlanId(null)}
+            className="btn btn-outline"
+            style={{ marginBottom: '20px' }}
+          >
+            ⬅ Nazad na sve planove
+          </button>
+
+          {ucitava ? (
+            <p className="text-muted" style={{ textAlign: 'center', marginTop: '40px' }}>Učitavanje detalja plana...</p>
+          ) : greska ? (
+            <p style={{ color: 'var(--danger)', textAlign: 'center' }}>Greška: {greska}</p>
+          ) : podaci && (
             <div>
-              <button 
-                onClick={() => setAktivniPlanId(null)} 
-                style={{ marginBottom: '20px', background: 'transparent', border: '1px solid #fff' }}
-              >
-                ← Nazad na sva putovanja
-              </button>
-
-              {ucitava && <p>Učitavanje detalja plana...</p>}
-              {greska && <p style={{ color: 'red' }}>Greška: {greska}</p>}
-
-              {podaci && (
-                <div style={{ textAlign: 'left', background: '#242424', padding: '20px', borderRadius: '8px', border: '1px solid #646cff' }}>
-                  <h2>{podaci.naziv}</h2>
-                  <p><strong>Opis:</strong> {podaci.opis}</p>
-                  
-                  <div style={{ display: 'flex', justifyContent: 'space-between', background: '#1a1a1a', padding: '10px', borderRadius: '5px' }}>
-                    <span><strong>Planirani budžet:</strong> {podaci.planiraniBudzet}</span>
-                    <span style={{ color: trenutniBudzet > podaci.planiraniBudzet ? '#ff4d4d' : '#4dff4d' }}>
-                      <strong>Trenutna potrošnja:</strong> {trenutniBudzet}
-                    </span>
+              {/* Kartica sa informacijama o aktivnom planu */}
+              <div className="card">
+                <div className="flex-between" style={{ alignItems: 'flex-start', flexWrap: 'wrap', gap: '15px' }}>
+                  <div style={{ flex: 1, minWidth: '250px' }}>
+                    <h1 style={{ marginBottom: '8px', color: 'var(--mystic-blue)' }}>{podaci?.naziv}</h1>
+                    <p className="text-muted" style={{ fontSize: '16px', margin: 0 }}>{podaci?.opis}</p>
                   </div>
-
                   <button 
-                      onClick={() => setPrikaziModalZaDeljenje(true)}
-                      style={{ background: '#646cff', color: 'white', marginLeft: '15px', padding: '8px 16px', border: 'none', borderRadius: '8px' }}
+                    onClick={() => setPrikaziModalZaDeljenje(true)}
+                    className="btn btn-primary"
+                    style={{ marginTop: '30px', marginLeft: '10px' }}
                   >
-                      🔗 Podeli
+                    🔗 Podeli plan
                   </button>
-            
-                  <Spisak planId={podaci.id} stavke={podaci.spisak || []} />
-                  
-                  <hr style={{ margin: '20px 0', borderColor: '#444' }} />
-                  
-                  <DodajDestinaciju planId={podaci.id} />
+                  {!izmenaPlana && (
+                    <button onClick={pokreniIzmenuPlana} className="btn btn-primary" style={{ marginTop: '30px', marginLeft: '10px' }}>
+                      ✏ Izmeni plan
+                    </button>
+                  )}
+                  {izmenaPlana && (
+                    <div className="card" style={{ padding: '20px', marginBottom: '25px', borderColor: 'var(--accent-primary)' }}>
+                      <h3 style={{ marginTop: 0, marginBottom: '15px' }}>Uredi plan putovanja</h3>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        <input 
+                          type="text" 
+                          className="input-field" 
+                          value={planNaziv} 
+                          onChange={(e) => setPlanNaziv(e.target.value)} 
+                          placeholder="Naziv plana"
+                        />
+                        <textarea 
+                          className="input-field" 
+                          value={planOpis} 
+                          onChange={(e) => setPlanOpis(e.target.value)} 
+                          placeholder="Opis putovanja (opciono)"
+                          rows="3"
+                        />
+                        <input 
+                          type="number" 
+                          className="input-field" 
+                          value={planBudzet} 
+                          onChange={(e) => setPlanBudzet(e.target.value)} 
+                          placeholder="Planirani budžet (EUR)"
+                        />
+                        <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '5px' }}>
+                          <button onClick={() => setIzmenaPlana(false)} className="btn btn-outline" style={{ padding: '6px 12px' }}>Otkaži</button>
+                          <button onClick={handleSacuvajPlan} className="btn btn-primary" style={{ padding: '6px 12px' }}>Sačuvaj</button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Budžet sekcija */}
+                <div style={{ display: 'flex', gap: '20px', marginTop: '24px', flexWrap: 'wrap' }}>
+                  <div style={{ flex: 1, padding: '16px', background: 'var(--bg-main)', borderRadius: '8px' }}>
+                    <span className="text-muted" style={{ fontSize: '13px', display: 'block' }}>Planirani budžet</span>
+                    <strong style={{ fontSize: '20px', color: 'var(--mystic-blue)' }}>{podaci.planiraniBudzet} RSD</strong>
+                  </div>
+                  <div style={{ flex: 1, padding: '16px', background: trenutniBudzet < 0 ? '#fee2e2' : 'var(--bg-main)', borderRadius: '8px' }}>
+                    <span className="text-muted" style={{ fontSize: '13px', display: 'block' }}> Potrošeno</span>
+                    <strong style={{ fontSize: '20px', color: trenutniBudzet < 0 ? 'var(--danger)' : 'var(--success)' }}>
+                      {trenutniBudzet} RSD
+                    </strong>
+                  </div>
+                  <div style={{ flex: 1, padding: '16px', background: trenutniBudzet < 0 ? '#fee2e2' : 'var(--bg-main)', borderRadius: '8px' }}>
+                    <span className="text-muted" style={{ fontSize: '13px', display: 'block' }}> Preostali budžet</span>
+                    <strong style={{ fontSize: '20px', color: trenutniBudzet < 0 ? 'var(--danger)' : 'var(--success)' }}>
+                      {podaci.planiraniBudzet - trenutniBudzet} RSD
+                    </strong>
+                  </div>
+                </div>
+              </div>
 
-                  <hr style={{ margin: '20px 0', borderColor: '#444' }} />
+              {/* To-Do Spisak */}
+              <Spisak planId={podaci.id} stavke={podaci.spisak} />
 
-                  <h3>Planirane destinacije:</h3>
-                  {podaci.destinacije && podaci.destinacije.length > 0 ? (
-                    <ul style={{ listStyleType: 'none', padding: 0 }}>
-                      {podaci.destinacije.map((destinacija) => (
-                        <li 
-                          key={destinacija.id} 
-                          style={{ 
-                            display: 'flex', 
-                            justifyContent: 'space-between', 
-                            alignItems: 'center', 
-                            background: '#333', 
-                            padding: '10px 15px', 
-                            borderRadius: '8px', 
-                            marginBottom: '10px' 
-                          }}
-                        >
-                          <div style={{ textAlign: 'left' }}>
-                            <strong style={{ fontSize: '16px' }}>{destinacija.nazivMesta}</strong>
-                            {destinacija.napomena && (
-                              <p style={{ margin: '4px 0 0 0', fontSize: '14px', color: '#aaa' }}>
-                                {destinacija.napomena}
-                              </p>
-                            )}
-                            <span style={{ fontSize: '12px', color: '#888', display: 'block', marginTop: '4px' }}>
-                              {new Date(destinacija.datumDolaska).toLocaleDateString('sr-RS')} - {new Date(destinacija.datumOdlaska).toLocaleDateString('sr-RS')}
-                            </span>
-                          </div>
-                          
+              {/* Sekcija za Destinacije */}
+              <div style={{ marginTop: '40px' }}>
+                <h2 style={{ color: 'var(--venice-blue)' }}>📍 Destinacije</h2>
+                <DodajDestinaciju planId={podaci.id} />
+                
+                {podaci.destinacije && podaci.destinacije.map((destinacija) => (
+                  <div key={destinacija.id} className="card" style={{ marginBottom: '12px', padding: '14px' }}>
+                    {izmenaDestinacijeId === destinacija.id ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <input 
+                          type="text" 
+                          className="input-field" 
+                          value={destinacijaMesto} 
+                          onChange={(e) => setDestinacijaMesto(e.target.value)} 
+                          placeholder="Naziv mesta"
+                        />
+                        <input 
+                          type="text" 
+                          className="input-field" 
+                          value={destinacijaNapomena} 
+                          onChange={(e) => setDestinacijaNapomena(e.target.value)} 
+                          placeholder="Napomena"
+                        />
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                          <input type="date" className="input-field" value={destinacijaDolazak} onChange={(e) => setDestinacijaDolazak(e.target.value)} />
+                          <input type="date" className="input-field" value={destinacijaOdlazak} onChange={(e) => setDestinacijaOdlazak(e.target.value)} />
+                        </div>
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                          <button onClick={() => setIzmenaDestinacijeId(null)} className="btn btn-outline" style={{ padding: '4px 10px', fontSize: '13px' }}>Otkaži</button>
+                          <button onClick={() => handleSacuvajDestinaciju(destinacija.id)} className="btn btn-primary" style={{ padding: '4px 10px', fontSize: '13px' }}>Sačuvaj</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex-between">
+                        <div>
+                          <strong style={{ fontSize: '16px', color: 'var(--text-main)' }}>📍 {destinacija.nazivMesta}</strong>
+                          {destinacija.napomena && <p className="text-muted" style={{ margin: '4px 0 0 0', fontSize: '13px' }}>{destinacija.napomena}</p>}
+                          <small className="text-muted" style={{ display: 'block', marginTop: '6px' }}>
+                            📅 {new Date(destinacija.datumDolaska).toLocaleDateString()} - {new Date(destinacija.datumOdlaska).toLocaleDateString()}
+                          </small>
+                        </div>
+                        <div style={{ display: 'flex', gap: '6px' }}>
+                          <button 
+                            onClick={() => pokreniIzmenuDestinacije(destinacija)}
+                            className="btn"
+                            style={{ background: 'transparent', color: 'var(--text-muted)', padding: '4px', fontSize: '16px' }}
+                            onMouseOver={(e) => e.target.style.color = 'var(--accent-primary)'}
+                            onMouseOut={(e) => e.target.style.color = 'var(--text-muted)'}
+                            title="Izmeni destinaciju"
+                          >
+                            ✏
+                          </button>
                           <button 
                             onClick={() => {
-                              if (window.confirm('Da li ste sigurni da želite da izbrišete ovu destinaciju sa spiska?')) {
+                              if(window.confirm('Obriši ovu destinaciju?')) {
                                 dispatch(obrisiDestinaciju(destinacija.id));
                               }
                             }}
-                            style={{ 
-                              background: '#ff4d4d', 
-                              color: 'white', 
-                              border: 'none', 
-                              padding: '5px 10px', 
-                              cursor: 'pointer', 
-                              fontWeight: 'bold',
-                              borderRadius: '4px',
-                              marginLeft: '15px'
-                            }}
+                            className="btn"
+                            style={{ background: 'transparent', color: 'var(--text-muted)', padding: '4px', fontSize: '16px' }}
+                            onMouseOver={(e) => e.target.style.color = 'var(--danger)'}
+                            onMouseOut={(e) => e.target.style.color = 'var(--text-muted)'}
+                            title="Obriši destinaciju"
                           >
-                            X
+                            ✖
                           </button>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p>Nema evidentiranih destinacija za ovaj plan.</p>
-                  )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
 
-                  <hr style={{ margin: '20px 0', borderColor: '#444' }} />
+              {/* Sekcija za Troškove */}
+              <div style={{ marginTop: '40px', marginBottom: '50px' }}>
+                <h2 style={{ color: 'var(--venice-blue)' }}>💰 Troškovi</h2>
+                <DodajTrosak planId={podaci.id} />
 
-                  <DodajTrosak planId={podaci.id} />
-
-                  <hr style={{ margin: '20px 0', borderColor: '#444' }} />
-                  
-                  <h3>Zabeleženi troškovi:</h3>
-                  {podaci.troskovi && podaci.troskovi.length > 0 ? (
-                    <ul style={{ listStyleType: 'none', padding: 0 }}>
-                      {podaci.troskovi.map((trosak) => (
-                        <li key={trosak.id} style={{ background: '#333', padding: '10px', marginBottom: '5px', borderRadius: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <div>
-                            <strong>{trosak.kategorija}</strong> - {trosak.opis} <br/>
-                            <span style={{ color: '#aaa' }}>Iznos: {trosak.iznos}</span>
+                {podaci.troskovi && podaci.troskovi.map((trosak) => (
+                  <div key={trosak.id} className="flex-between" style={{ padding: '10px 0', borderBottom: '1px solid var(--border-color)' }}>
+                    {izmenaTroskaId === trosak.id ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <input type="text" className="input-field" style={{ flex: 1 }} value={trosakKategorija} onChange={(e) => setTrosakKategorija(e.target.value)} placeholder="Kategorija" />
+                          <input type="number" className="input-field" style={{ width: '100px' }} value={trosakIznos} onChange={(e) => setTrosakIznos(e.target.value)} placeholder="Iznos" />
+                        </div>
+                        <input type="text" className="input-field" value={trosakOpis} onChange={(e) => setTrosakOpis(e.target.value)} placeholder="Opis troška" />
+                        <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
+                          <button onClick={() => setIzmenaTroskaId(null)} className="btn btn-outline" style={{ padding: '2px 8px', fontSize: '12px' }}>Otkaži</button>
+                          <button onClick={() => handleSacuvajTrosak(trosak.id)} className="btn btn-primary" style={{ padding: '2px 8px', fontSize: '12px' }}>Sačuvaj</button>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <div>
+                          <span style={{ fontWeight: 500 }}>{trosak.kategorija}</span>
+                          {trosak.opis && <span className="text-muted" style={{ fontSize: '13px', marginLeft: '8px' }}>({trosak.opis})</span>}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <strong style={{ color: 'var(--danger)' }}>-{trosak.iznos} RSD</strong>
+                          <div style={{ display: 'flex', gap: '4px' }}>
+                            <button 
+                              onClick={() => pokreniIzmenuTroska(trosak)}
+                              className="btn"
+                              style={{ background: 'transparent', color: 'var(--text-muted)', padding: '4px', fontSize: '15px' }}
+                              onMouseOver={(e) => e.target.style.color = 'var(--accent-primary)'}
+                              onMouseOut={(e) => e.target.style.color = 'var(--text-muted)'}
+                              title="Izmeni trošak"
+                            >
+                              ✏
+                            </button>
+                            <button 
+                              onClick={() => {
+                                if(window.confirm('Obriši ovaj trošak?')) {
+                                  dispatch(obrisiTrosak({ trosakId: trosak.id, planId: podaci.id, iznos: trosak.iznos }));
+                                }
+                              }}
+                              className="btn"
+                              style={{ background: 'transparent', color: 'var(--text-muted)', padding: '4px', fontSize: '15px' }}
+                              onMouseOver={(e) => e.target.style.color = 'var(--danger)'}
+                              onMouseOut={(e) => e.target.style.color = 'var(--text-muted)'}
+                              title="Obriši trošak"
+                            >
+                              ✖
+                            </button>
                           </div>
-                          <button 
-                            onClick={() => {
-                              if(window.confirm('Obriši ovaj trošak?')) {
-                                dispatch(obrisiTrosak({ trosakId: trosak.id, planId: podaci.id, iznos: trosak.iznos }));
-                              }
-                            }}
-                            style={{ background: '#ff4d4d', color: 'white', border: 'none', padding: '5px 10px', height: 'fit-content', cursor: 'pointer' }}
-                          >
-                            X
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p>Nema evidentiranih troškova za ovaj plan.</p>
-                  )}
-                </div>
-              )}
+                        </div>
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+              
+              {/* Modal za generisanje linka */}
               {prikaziModalZaDeljenje && (
-                  <Sharing 
-                      planId={aktivniPlanId} 
-                      onClose={() => {
-                        setPrikaziModalZaDeljenje(false);//zatvara model na UI
-                        dispatch(resetujGenerisaniToken());//resetuje token u store-u, da bi mogao da se generise novi
-                      }} 
-                  />
+                <Sharing 
+                  planId={aktivniPlanId} 
+                  onClose={() => {
+                    setPrikaziModalZaDeljenje(false);
+                    dispatch(resetujGenerisaniToken());
+                  }} 
+                />
               )}
             </div>
           )}
-        </>
+        </div>
       )}
     </div>
   );

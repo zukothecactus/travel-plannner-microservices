@@ -33,6 +33,7 @@
     <None Include="StartupServices.xml" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="ITravelDataService.cs" />
     <Content Include="packages.config" />
   </ItemGroup>
   <ItemGroup>

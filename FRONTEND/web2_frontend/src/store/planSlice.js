@@ -153,6 +153,52 @@ export const obrisiDestinaciju = createAsyncThunk(
     }
 );
 
+// Izmena osnovnih podataka plana
+export const izmeniPlan = createAsyncThunk(
+    'plan/izmeniPlan',
+    async (izmenjeniPlan, { dispatch, rejectWithValue }) => {
+        try {
+            const odgovor = await api.put(`/PlanPutovanja/${izmenjeniPlan.id}`, izmenjeniPlan);
+            // Automatski povlačimo osvežen plan
+            dispatch(dobaviPlan(izmenjeniPlan.id));
+            return odgovor.data;
+        } catch (error) {
+            return rejectWithValue(error.response?.data || "Greška pri izmeni plana");
+        }
+    }
+);
+
+// Izmena selektovane destinacije
+export const izmeniDestinaciju = createAsyncThunk(
+    'plan/izmeniDestinaciju',
+    async (izmenjenaDestinacija, { dispatch, rejectWithValue }) => {
+        try {
+            await api.put(`/PlanPutovanja/destinacija/${izmenjenaDestinacija.id}`, izmenjenaDestinacija);
+            // Osvežavamo ceo plan da povuče nove podatke o destinacijama
+            dispatch(dobaviPlan(izmenjenaDestinacija.planPutovanjaId));
+            return izmenjenaDestinacija;
+        } catch (error) {
+            return rejectWithValue(error.response?.data || "Greška pri izmeni destinacije");
+        }
+    }
+);
+
+// Izmena troška
+export const izmeniTrosak = createAsyncThunk(
+    'plan/izmeniTrosak',
+    async (izmenjeniTrosak, { dispatch, rejectWithValue }) => {
+        try {
+            await api.put(`/PlanPutovanja/trosak/${izmenjeniTrosak.id}`, izmenjeniTrosak);
+            // Pošto trošak utiče i na budžet, osvežavamo i plan i potrošnju
+            dispatch(dobaviPlan(izmenjeniTrosak.planPutovanjaId));
+            dispatch(dobaviPotrosnju(izmenjeniTrosak.planPutovanjaId));
+            return izmenjeniTrosak;
+        } catch (error) {
+            return rejectWithValue(error.response?.data || "Greška pri izmeni troška");
+        }
+    }
+);
+
 //global store
 const initialState = 
 {

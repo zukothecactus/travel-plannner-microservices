@@ -7,53 +7,66 @@ const Login = ({ onPrebaciNaRegistraciju }) => {
   const [lozinka, setLozinka] = useState('');
   
   const dispatch = useDispatch();
-  // Izvlačimo status iz Redux-a
   const { ucitava, greska } = useSelector((state) => state.auth);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Pozivamo asinhronu thunk akciju
     dispatch(loginUser({ Email: email, Lozinka: lozinka }));
   };
 
   return (
-    <div style={{ background: '#242424', padding: '30px', borderRadius: '8px', maxWidth: '400px', margin: '50px auto' }}>
-      <h2>Prijava</h2>
-      
-      {greska && (
-        <div style={{ padding: '10px', marginBottom: '15px', borderRadius: '4px', background: '#ff4d4d' }}>
-          {greska}
-        </div>
-      )}
+    <div className="app-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
+      <div className="card" style={{ width: '100%', maxWidth: '420px', padding: '40px 30px' }}>
+        <h2 style={{ textAlign: 'center', color: 'var(--mystic-blue)', marginBottom: '24px' }}>Prijava</h2>
+        
+        {greska && (
+          <div style={{ padding: '12px', marginBottom: '20px', borderRadius: '8px', background: '#fee2e2', color: 'var(--danger)', border: '1px solid #fca5a5', fontSize: '14px', textAlign: 'center' }}>
+            {greska}
+          </div>
+        )}
 
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-        <input 
-          type="email" 
-          placeholder="Email adresa" 
-          value={email} 
-          onChange={(e) => setEmail(e.target.value)} 
-          required 
-          style={{ padding: '10px' }}
-        />
-        <input 
-          type="password" 
-          placeholder="Lozinka" 
-          value={lozinka} 
-          onChange={(e) => setLozinka(e.target.value)} 
-          required 
-          style={{ padding: '10px' }}
-        />
-        <button type="submit" disabled={ucitava} style={{ background: '#4CAF50', color: 'white', padding: '10px' }}>
-          {ucitava ? 'Prijavljivanje...' : 'Uđi'}
-        </button>
-      </form>
-      
-      <p style={{ marginTop: '20px', fontSize: '14px' }}>
-        Nemaš nalog?{' '}
-        <span onClick={onPrebaciNaRegistraciju} style={{ color: '#646cff', cursor: 'pointer', textDecoration: 'underline' }}>
-          Registruj se ovde
-        </span>
-      </p>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div>
+            <label className="text-muted" style={{ display: 'block', marginBottom: '6px', fontSize: '13px' }}>Email adresa</label>
+            <input 
+              type="email" 
+              className="input-field"
+              placeholder="unesite email..." 
+              value={email} 
+              onChange={(e) => setEmail(e.target.value)} 
+              required 
+              style={{ marginBottom: 0 }}
+            />
+          </div>
+          <div>
+            <label className="text-muted" style={{ display: 'block', marginBottom: '6px', fontSize: '13px' }}>Lozinka</label>
+            <input 
+              type="password" 
+              className="input-field"
+              placeholder="unesite lozinku..." 
+              value={lozinka} 
+              onChange={(e) => setLozinka(e.target.value)} 
+              required 
+              style={{ marginBottom: 0 }}
+            />
+          </div>
+          
+          <button type="submit" disabled={ucitava} className="btn btn-primary" style={{ marginTop: '10px', padding: '12px', width: '100%', fontSize: '16px' }}>
+            {ucitava ? 'Prijavljivanje...' : 'Uđi'}
+          </button>
+        </form>
+
+        <div style={{ marginTop: '30px', paddingTop: '20px', borderTop: '1px solid var(--border-color)', textAlign: 'center' }}>
+          <p className="text-muted" style={{ fontSize: '14px', marginBottom: '12px' }}>Nemaš nalog?</p>
+          <button 
+            onClick={onPrebaciNaRegistraciju} 
+            className="btn btn-outline"
+            style={{ width: '100%' }}
+          >
+            Kreiraj nalog
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
