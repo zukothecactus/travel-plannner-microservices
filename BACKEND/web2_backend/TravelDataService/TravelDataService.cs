@@ -226,6 +226,33 @@ namespace TravelDataService
                 return false;
             }
         }
+
+        public async Task<double> DobaviSumuTroskovaZaPlanAsync(int planId)
+        {
+            using (var context = new TravelDbContext())
+            {
+                // Direktno iz baze uzimamo samo sumu, što je ultra brzo i bezbedno za serijalizaciju
+                return await context.Troskovi
+                    .Where(t => t.PlanPutovanjaId == planId)
+                    .SumAsync(t => t.Iznos);
+            }
+        }
+
+        public async Task<bool> ObrisiDestinacijuAsync(int destinacijaId)
+        {
+            using (var context = new TravelDbContext())
+            {
+                var destinacija = await context.Destinacije.FindAsync(destinacijaId);
+                if (destinacija != null)
+                {
+                    context.Destinacije.Remove(destinacija);
+                    await context.SaveChangesAsync();
+                    return true;
+                }
+                return false;
+            }
+        }
+
         public Task<string> PingAsync()
         {
             return Task.FromResult("Pozdrav od TravelData servisa! Remoting radi besprekorno.");

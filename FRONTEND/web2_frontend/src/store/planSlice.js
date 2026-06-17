@@ -141,6 +141,18 @@ export const validirajDeljeniLink = createAsyncThunk(
     }
 );
 
+export const obrisiDestinaciju = createAsyncThunk(
+    'plan/obrisiDestinaciju',
+    async (destinacijaId, {rejectWithValue}) => {
+        try{
+            await api.delete(`/PlanPutovanja/destinacija/${destinacijaId}`);
+            return destinacijaId;
+        } catch (error) {
+            return rejectWithValue(error.response?.data || "Došlo je do greške prilikom brisanja destinacije.");
+        }
+    }
+);
+
 //global store
 const initialState = 
 {
@@ -149,7 +161,7 @@ const initialState =
     trenutniBudzet: null,
     ucitava: false,
     greska: null,
-
+    
     deljeniPlan: null, // Čuvamo podatke o planu koji je deljen putem linka
     nivoPristupaDeljenog: null,
     deljenjUcitava: false,
@@ -160,7 +172,14 @@ const initialState =
 const planSlice = createSlice({
     name: 'plan',
     initialState,
-    reducers: {},
+    reducers: {
+        //mora da postoji i token refresh, jer nece moci u istoj sesiji da generise i view i edit qr kod
+        resetujGenerisaniToken:(state) => {
+            state.generisaniToken = null;
+            state.greska = null;
+        }
+
+    },
     extraReducers: (builder) => {
         builder
             .addCase(dobaviPlan.pending, (state) => {
@@ -221,8 +240,43 @@ const planSlice = createSlice({
             .addCase(validirajDeljeniLink.rejected, (state, action) => {
                 state.deljenjeUcitava = false;
                 state.deljenjeGreska = action.payload;
+            })
+            .addCase(dodajTrosak.fulfilled, (state, action) => {
+                // action.payload sadrži novokreirani trošak vraćen sa API-ja
+                
+                // Ažuriramo regularni plan ako je on aktivno otvoren
+                if (state.podaci && state.podaci.id === action.payload.planPutovanjaId) {
+                    state.podaci.troskovi.push(action.payload);
+                }
+                // Ažuriramo deljeni plan ako je neko skenirao EDIT QR kod
+                if (state.deljeniPlan && state.deljeniPlan.id === action.payload.planPutovanjaId) {
+                    state.deljeniPlan.troskovi.push(action.payload);
+                }
+            })
+            .addCase(dodajDestinaciju.fulfilled, (state, action) => {
+                if (state.podaci && state.podaci.id === action.payload.planPutovanjaId) {
+                    state.podaci.destinacije.push(action.payload);
+                }
+                if (state.deljeniPlan && state.deljeniPlan.id === action.payload.planPutovanjaId) {
+                    state.deljeniPlan.destinacije.push(action.payload);
+                }
+            })
+            .addCase(obrisiDestinaciju.fulfilled, (state, action) => {
+                // Ako je otvoren regularan plan, izbacujemo obrisanu destinaciju iz niza
+                if (state.podaci && state.podaci.destinacije) {
+                    state.podaci.destinacije = state.podaci.destinacije.filter(
+                        (d) => d.id !== action.payload
+                    );
+                }
+                // Ako se nalazi unutar deljenog plana, ažuriramo i njega
+                if (state.deljeniPlan && state.deljeniPlan.destinacije) {
+                    state.deljeniPlan.destinacije = state.deljeniPlan.destinacije.filter(
+                        (d) => d.id !== action.payload
+                    );
+                }
             });
     },
 });
 
+export const {resetujGenerisaniToken} = planSlice.actions;
 export default planSlice.reducer;

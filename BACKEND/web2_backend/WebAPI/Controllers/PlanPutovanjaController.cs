@@ -362,5 +362,24 @@ namespace WebAPI.Controllers
                 return BadRequest("Neispravan ili modifikovan token za deljenje.");
             }
         }
+
+        [HttpDelete("destinacija/{id}")]
+        public async Task<IActionResult> ObrisiDestinaciju(int id)
+        {
+            try
+            {
+                var uspesno = await _travelDataServiceProxy.ObrisiDestinacijuAsync(id);
+                if (uspesno)
+                {
+                    return Ok(new { Poruka = "Destinacija je uspešno obrisana.", DestinacijaId = id });
+                }
+                return BadRequest("Greska pri brisanju destinacije.");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Greška servera: {ex.Message}");
+
+            }
+        }
     }
 }

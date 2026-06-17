@@ -18,11 +18,11 @@ namespace TravelPlanner.Interfaces.Models
         public int KorisnikId { get; set; } 
 
         public List<ToDoStavka> Spisak { get; set; } = new List<ToDoStavka>();
-        
-        [JsonIgnore]
+
+        //[JsonIgnore] stavljeni JsonIgnore atributi da bi se izbegla rekurzija prilikom serijalizacije u JSON, za swagger, ali swagger je hejter
         public ICollection<Destinacija> Destinacije { get; set; } = new List<Destinacija>();
         
-        [JsonIgnore]
+        //[JsonIgnore]
         public ICollection<Trosak> Troskovi { get; set; } = new List<Trosak>();
     }
 }

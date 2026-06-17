@@ -9,6 +9,7 @@ using Microsoft.ServiceFabric.Services.Communication.Runtime;
 using Microsoft.ServiceFabric.Services.Runtime;
 using Microsoft.ServiceFabric.Services.Remoting.Runtime;
 using TravelPlanner.Interfaces;
+using Microsoft.ServiceFabric.Services.Remoting.Client;
 
 namespace SharingAndBudgetService
 {
@@ -25,13 +26,31 @@ namespace SharingAndBudgetService
         {
             var budzeti = await this.StateManager.GetOrAddAsync<IReliableDictionary<int, double>>("budzetRecnik");
 
+            // 1. Prva brza transakcija: Samo proveravamo da li podatak već postoji u kešu
             using (var tx = this.StateManager.CreateTransaction())
             {
                 var rezultat = await budzeti.TryGetValueAsync(tx, planId);
-
-                // Vraćamo vrednost ako postoji, u suprotnom vraćamo 0
-                return rezultat.HasValue ? rezultat.Value : 0;
+                if (rezultat.HasValue)
+                {
+                    return rezultat.Value; // Ako postoji, odmah vraćamo i završavamo posao
+                }
             }
+
+            // 2. CACHE MISS: Mrežni poziv radimo POTPUNO VAN transakcije
+            var travelDataProxy = ServiceProxy.Create<ITravelDataService>(
+                new Uri("fabric:/TravelPlannerApp/TravelDataService"));
+
+            // Pozivamo našu novu, laganu metodu koja vraća samo običan double
+            double inicijalnaPotrosnja = await travelDataProxy.DobaviSumuTroskovaZaPlanAsync(planId);
+
+            // 3. Druga brza transakcija: Otvaramo novu transakciju samo da upišemo vrednost u rečnik
+            using (var tx = this.StateManager.CreateTransaction())
+            {
+                await budzeti.AddOrUpdateAsync(tx, planId, inicijalnaPotrosnja, (kljuc, staraVrednost) => inicijalnaPotrosnja);
+                await tx.CommitAsync();
+            }
+
+            return inicijalnaPotrosnja;
         }
 
         public async Task<double> DodajTrosakUBudzetAsync(int planId, double iznos)

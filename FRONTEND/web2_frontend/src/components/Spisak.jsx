@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
-// Uvozimo TAČNA imena tvojih metoda iz planSlice-a
 import { dodajNaSpisak, toggleZavrseno, obrisiSaSpiska } from '../store/planSlice';
 
-const Spisak = ({ planId, stavke = [] }) => {
+// Dodali smo prop 'samoPregled' sa podrazumevanom vrednošću false
+const Spisak = ({ planId, stavke = [], samoPregled = false }) => {
   const dispatch = useDispatch();
   
   const [otvoreno, setOtvoreno] = useState(false);
@@ -13,8 +13,6 @@ const Spisak = ({ planId, stavke = [] }) => {
     e.preventDefault();
     if (!noviZadatak) return;
 
-    // Obrati pažnju: ovde mora biti PlanPutovanjaId sa velikim P, 
-    // jer si ga tako napisao u svom dodajNaSpisak thunk-u!
     dispatch(dodajNaSpisak({
       tekst: noviZadatak,
       jeZavrseno: false,
@@ -29,38 +27,43 @@ const Spisak = ({ planId, stavke = [] }) => {
       
       <div 
         onClick={() => setOtvoreno(!otvoreno)} 
-        style={{ padding: '15px', display: 'flex', justifyContent: 'space-between', cursor: 'pointer', background: '#242424', borderRadius: otvoreno ? '8px 8px 0 0' : '8px' }}
+        style={{ padding: '15px', display: 'flex', justifyContent: 'space-between', cursor: 'pointer' }}
       >
-        <h3 style={{ margin: 0 }}>📝 Spisak za putovanje</h3>
+        <h3 style={{ margin: 0 }}>📝 To-Do Spisak ({stavke.length})</h3>
         <span>{otvoreno ? '▲' : '▼'}</span>
       </div>
 
       {otvoreno && (
-        <div style={{ padding: '15px' }}>
+        <div style={{ padding: '15px', borderTop: '1px solid #444' }}>
           
-          <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
-            <input 
-              type="text" 
-              placeholder="Unesi novu stavku (npr. Kupi kremu za sunčanje)..." 
-              value={noviZadatak} 
-              onChange={(e) => setNoviZadatak(e.target.value)} 
-              style={{ flex: 1, padding: '8px' }}
-            />
-            <button type="submit" style={{ background: '#4CAF50', color: 'white' }}>Dodaj</button>
-          </form>
+          {/* Prikazujemo formu za dodavanje SAMO ako nismo u modu samo za pregled */}
+          {!samoPregled && (
+            <form onSubmit={handleSubmit} style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
+              <input 
+                type="text" 
+                placeholder="Dodaj novu stavku..." 
+                value={noviZadatak} 
+                onChange={(e) => setNoviZadatak(e.target.value)}
+                style={{ flex: 1 }} 
+              />
+              <button type="submit" style={{ background: '#4CAF50', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '4px' }}>
+                Dodaj
+              </button>
+            </form>
+          )}
 
           {stavke.length > 0 ? (
-            <ul style={{ listStyleType: 'none', padding: 0, margin: 0 }}>
+            <ul style={{ listStyleType: 'none', padding: 0 }}>
               {stavke.map((stavka) => (
-                <li key={stavka.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid #333' }}>
-                  
+                <li key={stavka.id} style={{ display: 'flex', justifyContent: 'space-between', background: '#2a2a2a', padding: '10px', marginBottom: '5px', borderRadius: '4px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <input 
                       type="checkbox" 
                       checked={stavka.jeZavrseno}
-                      // Koristimo tvoju toggleZavrseno metodu
+                      // Zaključavamo checkbox ako je u pitanju samo pregled
+                      disabled={samoPregled} 
                       onChange={() => dispatch(toggleZavrseno({ stavkaId: stavka.id, planId }))}
-                      style={{ cursor: 'pointer', width: '20px', height: '20px' }}
+                      style={{ cursor: samoPregled ? 'not-allowed' : 'pointer', width: '20px', height: '20px' }}
                     />
                     <span style={{ 
                       textDecoration: stavka.jeZavrseno ? 'line-through' : 'none', 
@@ -71,15 +74,16 @@ const Spisak = ({ planId, stavke = [] }) => {
                     </span>
                   </div>
 
-                  {/* Dodali smo i dugme koje poziva tvoju obrisiSaSpiska metodu! */}
-                  <button 
-                    onClick={() => dispatch(obrisiSaSpiska({ stavkaId: stavka.id, planId }))}
-                    style={{ background: 'transparent', color: '#ff4d4d', border: 'none', cursor: 'pointer', fontSize: '16px' }}
-                    title="Obriši stavku"
-                  >
-                    ✖
-                  </button>
-
+                  {/* Dugme za brisanje prikazujemo SAMO ako nismo u modu samo za pregled */}
+                  {!samoPregled && (
+                    <button 
+                      onClick={() => dispatch(obrisiSaSpiska({ stavkaId: stavka.id, planId }))}
+                      style={{ background: 'transparent', color: '#ff4d4d', border: 'none', cursor: 'pointer', fontSize: '16px' }}
+                      title="Obriši stavku"
+                    >
+                      ✖
+                    </button>
+                  )}
                 </li>
               ))}
             </ul>

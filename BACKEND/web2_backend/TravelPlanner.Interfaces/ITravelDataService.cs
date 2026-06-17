@@ -26,5 +26,8 @@ namespace TravelPlanner.Interfaces
         Task<KorisnikInfo> ProverKredencijalAsync(PrijavaDto podaci);
         Task<List<KorisnikInfo>> DobaviSveKorisnikeAsync();
         Task<bool> ObrisiKorisnikaAsync(int korisnikId);
+
+        Task<double> DobaviSumuTroskovaZaPlanAsync(int planId);
+        Task<bool> ObrisiDestinacijuAsync(int destinacijaId);
     }
 }

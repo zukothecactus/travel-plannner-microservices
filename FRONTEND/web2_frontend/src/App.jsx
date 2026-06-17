@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { dobaviPlan, dobaviPotrosnju, obrisiTrosak } from './store/planSlice';
+import { dobaviPlan, dobaviPotrosnju, obrisiTrosak, resetujGenerisaniToken, obrisiDestinaciju } from './store/planSlice';
 import { logout } from './store/authSlice';
 import DodajTrosak from './components/DodajTrosak';
 import ListaPlanova from './components/ListaPlanova';
@@ -139,20 +139,56 @@ if (putanja.startsWith('/deli/')) {
 
                   <h3>Planirane destinacije:</h3>
                   {podaci.destinacije && podaci.destinacije.length > 0 ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
-                      {podaci.destinacije.map((dest) => (
-                        <div key={dest.id} style={{ background: '#34495e', padding: '15px', borderRadius: '5px', borderLeft: '5px solid #3498db' }}>
-                          <h4 style={{ margin: '0 0 5px 0' }}>{dest.nazivMesta}</h4>
-                          {dest.napomena && <p style={{ margin: '0 0 10px 0', fontStyle: 'italic', fontSize: '14px', color: '#ccc' }}>{dest.napomena}</p>}
-                          <div style={{ fontSize: '13px', color: '#aaa' }}>
-                            <strong>Od:</strong> {new Date(dest.datumDolaska).toLocaleDateString()} <br />
-                            <strong>Do:</strong> {new Date(dest.datumOdlaska).toLocaleDateString()}
+                    <ul style={{ listStyleType: 'none', padding: 0 }}>
+                      {podaci.destinacije.map((destinacija) => (
+                        <li 
+                          key={destinacija.id} 
+                          style={{ 
+                            display: 'flex', 
+                            justifyContent: 'space-between', 
+                            alignItems: 'center', 
+                            background: '#333', 
+                            padding: '10px 15px', 
+                            borderRadius: '8px', 
+                            marginBottom: '10px' 
+                          }}
+                        >
+                          <div style={{ textAlign: 'left' }}>
+                            <strong style={{ fontSize: '16px' }}>{destinacija.nazivMesta}</strong>
+                            {destinacija.napomena && (
+                              <p style={{ margin: '4px 0 0 0', fontSize: '14px', color: '#aaa' }}>
+                                {destinacija.napomena}
+                              </p>
+                            )}
+                            <span style={{ fontSize: '12px', color: '#888', display: 'block', marginTop: '4px' }}>
+                              {new Date(destinacija.datumDolaska).toLocaleDateString('sr-RS')} - {new Date(destinacija.datumOdlaska).toLocaleDateString('sr-RS')}
+                            </span>
                           </div>
-                        </div>
+                          
+                          <button 
+                            onClick={() => {
+                              if (window.confirm('Da li ste sigurni da želite da izbrišete ovu destinaciju sa spiska?')) {
+                                dispatch(obrisiDestinaciju(destinacija.id));
+                              }
+                            }}
+                            style={{ 
+                              background: '#ff4d4d', 
+                              color: 'white', 
+                              border: 'none', 
+                              padding: '5px 10px', 
+                              cursor: 'pointer', 
+                              fontWeight: 'bold',
+                              borderRadius: '4px',
+                              marginLeft: '15px'
+                            }}
+                          >
+                            X
+                          </button>
+                        </li>
                       ))}
-                    </div>
+                    </ul>
                   ) : (
-                    <p style={{ color: '#888', marginBottom: '20px' }}>Nemate unetih destinacija za ovo putovanje.</p>
+                    <p>Nema evidentiranih destinacija za ovaj plan.</p>
                   )}
 
                   <hr style={{ margin: '20px 0', borderColor: '#444' }} />
@@ -191,7 +227,10 @@ if (putanja.startsWith('/deli/')) {
               {prikaziModalZaDeljenje && (
                   <Sharing 
                       planId={aktivniPlanId} 
-                      onClose={() => setPrikaziModalZaDeljenje(false)} 
+                      onClose={() => {
+                        setPrikaziModalZaDeljenje(false);//zatvara model na UI
+                        dispatch(resetujGenerisaniToken());//resetuje token u store-u, da bi mogao da se generise novi
+                      }} 
                   />
               )}
             </div>

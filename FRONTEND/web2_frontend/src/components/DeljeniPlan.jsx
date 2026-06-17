@@ -55,7 +55,7 @@ const DeljeniPlan = ({ token }) => {
       </div>
 
       {/* To-Do Spisak - prikazujemo ga svima, ali unutrašnja logika može zavisiti od prava izmena */}
-      <Spisak planId={deljeniPlan.id} stavke={deljeniPlan.spisak} />
+      <Spisak planId={deljeniPlan.id} stavke={deljeniPlan.spisak} samoPregled={!jeEditMod} />
 
       {/* Sekcija za Destinacije */}
       <div style={{ marginTop: '30px' }}>
