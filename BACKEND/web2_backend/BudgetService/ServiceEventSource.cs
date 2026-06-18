@@ -7,9 +7,9 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.ServiceFabric.Services.Runtime;
 
-namespace SharingAndBudgetService
+namespace BudgetService
 {
-    [EventSource(Name = "MyCompany-TravelPlannerApp-SharingAndBudgetService")]
+    [EventSource(Name = "MyCompany-TravelPlannerApp-BudgetService")]
     internal sealed class ServiceEventSource : EventSource
     {
         public static readonly ServiceEventSource Current = new ServiceEventSource();

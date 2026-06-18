@@ -1,24 +1,25 @@
-﻿using System;
+﻿using Microsoft.ServiceFabric.Data.Collections;
+using Microsoft.ServiceFabric.Services.Client;
+using Microsoft.ServiceFabric.Services.Communication.Runtime;
+using Microsoft.ServiceFabric.Services.Remoting.Client;
+using Microsoft.ServiceFabric.Services.Runtime;
+using System;
 using System.Collections.Generic;
 using System.Fabric;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.ServiceFabric.Data.Collections;
-using Microsoft.ServiceFabric.Services.Communication.Runtime;
-using Microsoft.ServiceFabric.Services.Runtime;
-using Microsoft.ServiceFabric.Services.Remoting.Runtime;
 using TravelPlanner.Interfaces;
-using Microsoft.ServiceFabric.Services.Remoting.Client;
+using Microsoft.ServiceFabric.Services.Remoting.Runtime;
 
-namespace SharingAndBudgetService
+namespace BudgetService
 {
     /// <summary>
     /// An instance of this class is created for each service replica by the Service Fabric runtime.
     /// </summary>
-    internal sealed class SharingAndBudgetService : StatefulService, ISharingAndBudgetService
+    internal sealed class BudgetService : StatefulService, IBudgetService
     {
-        public SharingAndBudgetService(StatefulServiceContext context)
+        public BudgetService(StatefulServiceContext context)
             : base(context)
         { }
 
@@ -57,26 +58,33 @@ namespace SharingAndBudgetService
         {
             // Tražimo (ili pravimo) naš rečnik u memoriji klastera
             var budzeti = await this.StateManager.GetOrAddAsync<IReliableDictionary<int, double>>("budzetRecnik");
-
-            var redZaNotifikacije = await this.StateManager.GetOrAddAsync<IReliableQueue<string>>("notifikacijeRed");
+            double novoStanje;
 
             using (var tx = this.StateManager.CreateTransaction())
             {
-                // AddOrUpdateAsync: Ako planId već postoji u rečniku, na staru vrednost dodajemo novi iznos.
-                // Ako ne postoji, upisujemo inicijalni iznos.
-                var novoStanje = await budzeti.AddOrUpdateAsync(tx, planId, iznos, (kljuc, staraVrednost) => staraVrednost + iznos);
-
-                //Dodajemo poruku u red za notifikacije
-                string poruka = $"Plan {planId}: Dodat trošak od {iznos}. Novi budžet iznosi: {novoStanje}";
-                await redZaNotifikacije.EnqueueAsync(tx, poruka);
-
-
-                // Zaključavamo transakciju i replikujemo podatke
+                novoStanje = await budzeti.AddOrUpdateAsync(tx, planId, iznos, (kljuc, staraVrednost) => staraVrednost + iznos);
                 await tx.CommitAsync();
-
-                return novoStanje;
             }
+
+            // 2. Umesto lokalnog reda, obaveštavamo SharingService!
+            try
+            {
+                // Uzimamo hardkodovanu particiju 0 pošto SharingService trenutno nema strogu podelu
+                var sharingProxy = ServiceProxy.Create<ISharingService>(
+                    new Uri("fabric:/TravelPlannerApp/SharingService"),
+                    new ServicePartitionKey(0));
+
+                string poruka = $"Plan {planId}: Dodat trošak od {iznos}. Novi budžet iznosi: {novoStanje}";
+                await sharingProxy.PosaljiNotifikacijuAsync(poruka);
+            }
+            catch (Exception ex)
+            {
+                ServiceEventSource.Current.ServiceMessage(this.Context, $"Greška kod obaveštavanja: {ex.Message}");
+            }
+
+            return novoStanje;
         }
+        
 
         //Kada se ključ obriše, sledeći poziv ka tom servisu će automatski izračunati novu vrednost iz baze.
         //treba nam kada promenimo budzet u TravelDataService, da bi se keš invalidirao i sledeći put kada se pozove metoda DobaviUkupnuPotrosnjuAsync, da se iz baze ponovo izračuna.
@@ -89,14 +97,6 @@ namespace SharingAndBudgetService
                 await tx.CommitAsync();
             }
         }
-
-        /// <summary>
-        /// Optional override to create listeners (e.g., HTTP, Service Remoting, WCF, etc.) for this service replica to handle client or user requests.
-        /// </summary>
-        /// <remarks>
-        /// For more information on service communication, see https://aka.ms/servicefabricservicecommunication
-        /// </remarks>
-        /// <returns>A collection of listeners.</returns>
         protected override IEnumerable<ServiceReplicaListener> CreateServiceReplicaListeners()
         {
             return this.CreateServiceRemotingReplicaListeners();
@@ -109,30 +109,31 @@ namespace SharingAndBudgetService
         /// <param name="cancellationToken">Canceled when Service Fabric needs to shut down this service replica.</param>
         protected override async Task RunAsync(CancellationToken cancellationToken)
         {
-            var redZaNotifikacije = await this.StateManager.GetOrAddAsync<IReliableQueue<string>>("notifikacijeRed");
+            // TODO: Replace the following sample code with your own logic 
+            //       or remove this RunAsync override if it's not needed in your service.
 
-            //petlja koja radi u pozadini klastera
-            while(true)
+            var myDictionary = await this.StateManager.GetOrAddAsync<IReliableDictionary<string, long>>("myDictionary");
+
+            while (true)
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
                 using (var tx = this.StateManager.CreateTransaction())
                 {
-                    var poruka = await redZaNotifikacije.TryDequeueAsync(tx);
-                    if(poruka.HasValue)
-                    {
-                        //kasnije ce se implementirati slanje mejla ako bude trebalo za projekni zadatak lol
+                    var result = await myDictionary.TryGetValueAsync(tx, "Counter");
 
-                        ServiceEventSource.Current.ServiceMessage(this.Context, $"[ASINHRONA OBRADA]: Poslat email -> {poruka.Value}");
+                    ServiceEventSource.Current.ServiceMessage(this.Context, "Current Counter Value: {0}",
+                        result.HasValue ? result.Value.ToString() : "Value does not exist.");
 
-                        await tx.CommitAsync();
-                    }
+                    await myDictionary.AddOrUpdateAsync(tx, "Counter", 0, (key, value) => ++value);
+
+                    // If an exception is thrown before calling CommitAsync, the transaction aborts, all changes are 
+                    // discarded, and nothing is saved to the secondary replicas.
+                    await tx.CommitAsync();
                 }
 
-                await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
-
+                await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
             }
-
         }
     }
 }

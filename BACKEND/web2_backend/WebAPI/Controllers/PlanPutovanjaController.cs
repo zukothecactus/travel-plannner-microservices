@@ -131,8 +131,8 @@ namespace WebAPI.Controllers
                 if (uspesno)
                 {
                     //ovo postoji kako bismo gadjali dobru particiju stateful servisa, jer svaki trosak ima svoj PlanPutovanjaId, a mi u SharingAndBudgetServiceu koristimo taj ID kao ključ particije, tako da ćemo ga iskoristiti i ovde da pogodimo pravu particiju
-                    var budgetProxy = ServiceProxy.Create<ISharingAndBudgetService>(
-                new Uri("fabric:/TravelPlannerApp/SharingAndBudgetService"),
+                    var budgetProxy = ServiceProxy.Create<IBudgetService>(
+                new Uri("fabric:/TravelPlannerApp/BudgetService"),
                 new ServicePartitionKey(trosak.PlanPutovanjaId));
                     
 
@@ -155,8 +155,8 @@ namespace WebAPI.Controllers
             try
             {
                 // Pravimo proxy koji ponovo gađa ISTU TAČNU particiju
-                var budgetProxy = ServiceProxy.Create<ISharingAndBudgetService>(
-                    new Uri("fabric:/TravelPlannerApp/SharingAndBudgetService"),
+                var budgetProxy = ServiceProxy.Create<IBudgetService>(
+                    new Uri("fabric:/TravelPlannerApp/BudgetService"),
                     new ServicePartitionKey(id));
 
                 var ukupno = await budgetProxy.DobaviUkupnuPotrosnjuAsync(id);
@@ -187,8 +187,8 @@ namespace WebAPI.Controllers
                 if (uspesno)
                 {
                     // Sinhronizacija sa Stateful servisom - oduzimamo obrisani iznos!
-                    var budgetProxy = ServiceProxy.Create<ISharingAndBudgetService>(
-                        new Uri("fabric:/TravelPlannerApp/SharingAndBudgetService"),
+                    var budgetProxy = ServiceProxy.Create<IBudgetService>(
+                        new Uri("fabric:/TravelPlannerApp/BudgetService"),
                         new ServicePartitionKey(planId));
 
                     // Prosleđujemo negativnu vrednost

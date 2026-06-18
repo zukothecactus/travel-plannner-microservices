@@ -37,7 +37,8 @@
     <Content Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\SharingAndBudgetService\SharingAndBudgetService.csproj" />
+    <ProjectReference Include="..\BudgetService\BudgetService.csproj" />
+    <ProjectReference Include="..\SharingService\SharingService.csproj" />
     <ProjectReference Include="..\TravelDataService\TravelDataService.csproj" />
     <ProjectReference Include="..\WebAPI\WebAPI.csproj">
       <ServiceLaunchUrl>http://localhost:{ServicePort}/swagger</ServiceLaunchUrl>

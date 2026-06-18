@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace TravelPlanner.Interfaces
 {
-    public interface ISharingAndBudgetService: IService
+    public interface IBudgetService:IService
     {
         Task<double> DodajTrosakUBudzetAsync(int planId, double iznos);
         Task<double> DobaviUkupnuPotrosnjuAsync(int planId);
