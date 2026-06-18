@@ -8,6 +8,14 @@ using System.Runtime.Serialization; //ponovo izbegavamo ciklicno ponasanje
 
 namespace TravelPlanner.Interfaces.Models
 {
+    public enum StatusAktivnosti
+    { 
+        Planirano = 0,
+        Rezervisano = 1,
+        Zavrseno = 2,
+        Otkazano = 3
+    }
+
     public class Aktivnost
     {
         public int Id { get; set; }
@@ -15,6 +23,9 @@ namespace TravelPlanner.Interfaces.Models
         public string? Opis { get; set; }
         public DateTime VremePocetka { get; set; }
         public DateTime VremeZavrsetka { get; set; }
+        public string? Lokacija { get; set; }
+        public double? Trosak { get; set; }
+        public StatusAktivnosti Status { get; set; }
 
         // Strani ključ koji povezuje aktivnost sa određenom destinacijom
         public int DestinacijaId { get; set; }

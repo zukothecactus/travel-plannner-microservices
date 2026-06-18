@@ -8,7 +8,8 @@ import {
   obrisiDestinaciju,
   izmeniPlan,
   izmeniDestinaciju,
-  izmeniTrosak
+  izmeniTrosak, 
+  izmeniAktivnost
 } from './store/planSlice';
 import { logout } from './store/authSlice';
 import DodajTrosak from './components/DodajTrosak';
@@ -20,6 +21,8 @@ import Register from './components/Register';
 import AdminPanel from './components/AdminPanel';
 import Sharing from './components/Sharing';
 import DeljeniPlan from './components/DeljeniPlan';
+import DodajAktivnost from './components/DodajAktivnost';
+import KalendarAktivnosti from './components/KalendarAktivnosti';
 import './App.css';
 
 function App() {
@@ -52,6 +55,10 @@ function App() {
   const [selektovanaKategorija, setSelektovanaKategorija] = useState('Svi troskovi');
   const kategorije = ['Svi troskovi', 'Smeštaj', 'Prevoz', 'Hrana', 'Ostalo'];
 
+// Stanja za kontrolu kalendara i aktivnosti
+const [prikaziModalZaAktivnost, setPrikaziModalZaAktivnost] = useState(false);
+const [aktivnostZaEdit, setAktivnostZaEdit] = useState(null);
+const [aktivnaDestinacijaId, setAktivnaDestinacijaId] = useState(null); // Dodato da se ne bi bunio prosleđeni prop u Formi
 
   const { token, korisnik } = useSelector((state) => state.auth);
   const { podaci, trenutniBudzet, ucitava, greska } = useSelector((state) => state.plan);
@@ -150,11 +157,34 @@ const handleSacuvajTrosak = (id) => {
   }));
   setIzmenaTroskaId(null);
 };
+const handleAktivnostSelektovana = (event) => {
+  // Mapiramo nazad u format koji tvoja FormaAktivnost očekuje za editovanje
+  setAktivnostZaEdit({
+    id: event.id,
+    naziv: event.title,
+    vremePocetka: event.start.toISOString(),
+    vremeZavrsetka: event.end.toISOString(),
+    opis: event.opis,
+    lokacija: event.lokacija,
+    trosak: event.trosak,
+    status: event.status,
+    destinacijaId: event.destinacijaId
+  });
+  setPrikaziModalZaAktivnost(true);
+};
+
+const handlePrazanSlotSelektovan = (slotInfo) => {
+  setAktivnostZaEdit(null); // Osiguravamo da je prazno za novu aktivnost
+  setPrikaziModalZaAktivnost(true);
+};
 
 const sviTroskovi = podaci?.troskovi || [];
 const prikazaniTroskovi = selektovanaKategorija === 'Svi troskovi' 
     ? sviTroskovi
     : sviTroskovi.filter(t => t.kategorija?.toLowerCase() === selektovanaKategorija.toLowerCase());
+
+// Prikupljamo sve aktivnosti iz svih destinacija koje pripadaju ovom planu
+const sveAktivnosti = podaci?.destinacije?.flatMap(d => d.aktivnosti || []) || [];
 
   return (
     <div className="app-container">
@@ -359,6 +389,15 @@ const prikazaniTroskovi = selektovanaKategorija === 'Svi troskovi'
                 ))}
               </div>
 
+              <div style={{ marginTop: '30px' }}>
+                <h2>📅 Raspored i aktivnosti</h2>
+                <KalendarAktivnosti 
+                  aktivnosti={sveAktivnosti} // Menjamo ovo!
+                  onAktivnostSelektovana={handleAktivnostSelektovana}
+                  onPrazanSlotSelektovan={handlePrazanSlotSelektovan}
+                />
+              </div>
+
               {/* Sekcija za Troškove */}
               <div style={{ marginTop: '40px', marginBottom: '50px' }}>
                 <h2 style={{ color: 'var(--venice-blue)' }}>💰 Troškovi</h2>
@@ -457,6 +496,19 @@ const prikazaniTroskovi = selektovanaKategorija === 'Svi troskovi'
                     setPrikaziModalZaDeljenje(false);
                     dispatch(resetujGenerisaniToken());
                   }} 
+                />
+              )}
+              {/* Modal za dodavanje/izmenu aktivnosti */}
+              {prikaziModalZaAktivnost && (
+                <DodajAktivnost 
+                  isOpen={prikaziModalZaAktivnost}
+                  onClose={() => {
+                    setPrikaziModalZaAktivnost(false);
+                    setAktivnostZaEdit(null); // Resetujemo kada zatvorimo
+                  }}
+                  planId={aktivniPlanId}
+                  destinacijaId={aktivnaDestinacijaId|| (podaci?.destinacije?.length > 0 ? podaci.destinacije[0].id : 0)}
+                  aktivnostZaIzmenu={aktivnostZaEdit}
                 />
               )}
             </div>

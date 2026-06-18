@@ -319,6 +319,49 @@ namespace TravelDataService
             }
         }
 
+        public async Task<bool> DodajAktivnostAsync(Aktivnost aktivnost)
+        {
+            using (var context = new TravelDbContext())
+            {
+                context.Aktivnosti.Add(aktivnost);
+                await context.SaveChangesAsync();
+                return true;
+            }
+        }
+
+        public async Task<bool> AzurirajAktivnostAsync(Aktivnost izmenjenaAktivnost)
+        {
+            using (var context = new TravelDbContext())
+            {
+                var postojecaAktivnost = await context.Aktivnosti.FindAsync(izmenjenaAktivnost.Id);
+                if (postojecaAktivnost == null) return false;
+                postojecaAktivnost.Naziv = izmenjenaAktivnost.Naziv;
+                postojecaAktivnost.Opis = izmenjenaAktivnost.Opis;
+                postojecaAktivnost.VremePocetka = izmenjenaAktivnost.VremePocetka;
+                postojecaAktivnost.VremeZavrsetka = izmenjenaAktivnost.VremeZavrsetka;
+                postojecaAktivnost.Lokacija = izmenjenaAktivnost.Lokacija;
+                postojecaAktivnost.Trosak = izmenjenaAktivnost.Trosak;
+                postojecaAktivnost.Status = izmenjenaAktivnost.Status;
+                await context.SaveChangesAsync();
+                return true;
+            }
+        }
+
+        public async Task<bool> ObrisiAktivnostAsync(int aktivnostId)
+        {
+            using (var context = new TravelDbContext())
+            {
+                var aktivnost = await context.Aktivnosti.FindAsync(aktivnostId);
+                if (aktivnost != null)
+                {
+                    context.Aktivnosti.Remove(aktivnost);
+                    await context.SaveChangesAsync();
+                    return true;
+                }
+                return false;
+            }
+        }
+
         public Task<string> PingAsync()
         {
             return Task.FromResult("Pozdrav od TravelData servisa! Remoting radi besprekorno.");

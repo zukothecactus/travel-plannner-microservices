@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.ServiceFabric.Services.Remoting;
@@ -37,5 +38,8 @@ namespace TravelPlanner.Interfaces
 
         Task<bool> PromeniUloguKorisnikaAsync(int korisnikId, string novaUloga);
 
+        Task<bool> DodajAktivnostAsync(Aktivnost aktivnost);
+        Task<bool> AzurirajAktivnostAsync(Aktivnost aktivnost);
+        Task<bool> ObrisiAktivnostAsync(int aktivnostId);
     }
 }

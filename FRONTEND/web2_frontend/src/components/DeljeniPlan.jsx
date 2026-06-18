@@ -1,14 +1,20 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { validirajDeljeniLink } from '../store/planSlice';
 import DodajTrosak from './DodajTrosak';
 import DodajDestinaciju from './DodajDestinaciju';
 import Spisak from './Spisak';
+import KalendarAktivnosti from './KalendarAktivnosti';
+import DodajAktivnost from './DodajAktivnost';
 
 const DeljeniPlan = ({ token }) => {
   const dispatch = useDispatch();
   
   const { deljeniPlan, nivoPristupaDeljenog, deljenjeUcitava, deljenjeGreska } = useSelector((state) => state.plan);
+
+  // Lokalna stanja za modal detalja
+  const [prikaziDetalje, setPrikaziDetalje] = useState(false);
+  const [aktivnostZaDetalje, setAktivnostZaDetalje] = useState(null)
 
   useEffect(() => {
     if (token) {
@@ -31,6 +37,39 @@ const DeljeniPlan = ({ token }) => {
       </div>
     );
   }
+
+  // Prikupljamo sve aktivnosti iz svih destinacija deljenog plana
+  const sveAktivnosti = deljeniPlan?.destinacije?.flatMap(d => d.aktivnosti || []) || [];
+
+  const handleSamoPregled = () => {
+    alert("Nije moguće menjati aktivnosti iz pregleda deljenog plana.");
+  };
+
+  const handlePregledAktivnosti = (event) => {
+    setAktivnostZaDetalje({
+      id: event.id,
+      naziv: event.title,
+      vremePocetka: event.start.toISOString(),
+      vremeZavrsetka: event.end.toISOString(),
+      opis: event.opis,
+      lokacija: event.lokacija,
+      trosak: event.trosak,
+      status: event.status,
+      destinacijaId: event.destinacijaId
+    });
+    setPrikaziDetalje(true);
+  };
+
+    // Za klik na prazan slot ostavljamo blokadu, jer tu gosti ne treba da dodaju ništa
+  const handlePrazanSlot = () => {
+    // Ne radi ništa ili stavi alert("Režim pregleda.")
+  };
+
+  const handlePrazanSlotZaDodavanje = (slotInfo) => {
+    // Postavljamo aktivnostZaDetalje na null jer je nova aktivnost
+    setAktivnostZaDetalje(null);
+    setPrikaziDetalje(true);
+  };
 
   if (!deljeniPlan) return null;
 
@@ -75,6 +114,37 @@ const DeljeniPlan = ({ token }) => {
           <p className="text-muted" style={{ fontStyle: 'italic' }}>Nema dodatih destinacija.</p>
         )}
       </div>
+      
+      {/* Sekcija za kalendar aktivnosti */}
+   <div style={{ marginTop: '40px', marginBottom: '30px' }}>
+     <h2>📅 Raspored putovanja</h2>
+     {sveAktivnosti.length > 0 ? (
+       <KalendarAktivnosti 
+         aktivnosti={sveAktivnosti}
+         onAktivnostSelektovana={handlePregledAktivnosti} // OVO JE IZMENJENO
+         onPrazanSlotSelektovan={jeEditMod ? handlePrazanSlotZaDodavanje : handleSamoPregled}        // OVO JE IZMENJENO
+       />
+     ) : (
+       <p className="text-muted" style={{ fontStyle: 'italic' }}>
+         Nema planiranih aktivnosti za ovo putovanje.
+       </p>
+     )}
+   </div>
+
+   {/* Naš postojeći modal, sada u READ-ONLY modu */}
+   {prikaziDetalje && (
+     <DodajAktivnost 
+       isOpen={prikaziDetalje}
+       onClose={() => {
+         setPrikaziDetalje(false);
+         setAktivnostZaDetalje(null);
+       }}
+       planId={deljeniPlan.id}
+       destinacijaId={aktivnostZaDetalje?.destinacijaId}
+       aktivnostZaIzmenu={aktivnostZaDetalje}
+       samoPregled={!jeEditMod} // OVO KLJUČNO ZAKLJUČAVA FORMU
+     />
+   )}
 
       <div style={{ marginTop: '40px', marginBottom: '50px' }}>
         <h2>💰 Troškovi</h2>

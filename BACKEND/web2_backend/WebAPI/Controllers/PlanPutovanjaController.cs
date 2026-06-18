@@ -424,5 +424,27 @@ namespace WebAPI.Controllers
             }
             return BadRequest("Greška prilikom izmene troška.");
         }
+
+        [HttpPost("aktivnost")]
+        public async Task<IActionResult> DodajAktivnost([FromBody] Aktivnost aktivnost)
+        {
+            var uspesno = await _travelDataServiceProxy.DodajAktivnostAsync(aktivnost);
+            return uspesno ? Ok(new { Poruka = "Aktivnost uspešno dodata." }) : BadRequest("Nije moguće dodati aktivnost.");
+        }
+
+        [HttpPut("aktivnost/{id}")]
+        public async Task<IActionResult> IzmeniAktivnost(int id, [FromBody] Aktivnost aktivnost)
+        {
+            if (id != aktivnost.Id) return BadRequest("ID aktivnosti se ne poklapa.");
+            var uspesno = await _travelDataServiceProxy.AzurirajAktivnostAsync(aktivnost);
+            return uspesno ? Ok(new { Poruka = "Aktivnost uspešno izmenjena." }) : BadRequest("Nije moguće izmeniti aktivnost.");
+        }
+
+        [HttpDelete("aktivnost/{id}")]
+        public async Task<IActionResult> ObrisiAktivnost(int id)
+        {
+            var uspesno = await _travelDataServiceProxy.ObrisiAktivnostAsync(id);
+            return uspesno ? Ok(new { Poruka = "Aktivnost uspešno obrisana." }) : BadRequest("Nije moguće obrisati aktivnost.");
+        }
     }
 }

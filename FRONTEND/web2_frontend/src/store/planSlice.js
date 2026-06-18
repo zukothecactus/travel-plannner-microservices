@@ -152,7 +152,6 @@ export const obrisiDestinaciju = createAsyncThunk(
         }
     }
 );
-
 // Izmena osnovnih podataka plana
 export const izmeniPlan = createAsyncThunk(
     'plan/izmeniPlan',
@@ -195,6 +194,38 @@ export const izmeniTrosak = createAsyncThunk(
             return izmenjeniTrosak;
         } catch (error) {
             return rejectWithValue(error.response?.data || "Greška pri izmeni troška");
+        }
+    }
+);
+
+export const dodajAktivnost = createAsyncThunk(
+    'plan/dodajAktivnost',
+    async (novaAktinost, {dispatch}) => {
+        const odgovor = await api.post('/PlanPutovanja/aktivnost', novaAktinost);
+        dispatch(dobaviPlan(novaAktinost.planPutovanjaId));
+        return odgovor.data;
+    }
+);
+export const obrisiAktivnost = createAsyncThunk(
+    'plan/obrisiAktivnost',
+    async ({aktivnostId, planId}, {dispatch, rejectWithValue}) => {
+        try {
+            await api.delete(`/PlanPutovanja/aktivnost/${aktivnostId}`);
+            dispatch(dobaviPlan(planId));
+        } catch (error) {
+            return rejectWithValue(error.response?.data || "Greška pri brisanju aktivnosti");
+        }
+    }
+);
+export const izmeniAktivnost = createAsyncThunk(
+    'plan/izmeniAktivnost',
+    async (izmenjenaAktivnost, {dispatch, rejectWithValue}) => {
+        try {
+            await api.put(`/PlanPutovanja/aktivnost/${izmenjenaAktivnost.id}`, izmenjenaAktivnost);
+            dispatch(dobaviPlan(izmenjenaAktivnost.planPutovanjaId));
+            return izmenjenaAktivnost;
+        } catch (error) {
+            return rejectWithValue(error.response?.data || "Greška pri izmeni aktivnosti");
         }
     }
 );
@@ -320,9 +351,33 @@ const planSlice = createSlice({
                         (d) => d.id !== action.payload
                     );
                 }
+            })
+            .addCase(dodajAktivnost.fulfilled, (state, action) => {
+                if (state.podaci && state.podaci.id === action.payload.planPutovanjaId) {
+                    state.podaci.aktivnosti.push(action.payload);
+                }
+                if (state.deljeniPlan && state.deljeniPlan.id === action.payload.planPutovanjaId) {
+                    state.deljeniPlan.aktivnosti.push(action.payload);
+                }
+            })
+            .addCase(izmeniAktivnost.fulfilled, (state, action) => {
+                if (state.podaci && state.podaci.aktivnosti) {
+                    state.podaci.aktivnosti = state.podaci.aktivnosti.map((a) => a.id === action.payload.id ? action.payload : a);
+                }
+                if (state.deljeniPlan && state.deljeniPlan.aktivnosti) {
+                    state.deljeniPlan.aktivnosti = state.deljeniPlan.aktivnosti.map((a) => a.id === action.payload.id ? action.payload : a);
+                }
+            })
+            .addCase(obrisiAktivnost.fulfilled, (state, action) => {
+                if (state.podaci && state.podaci.aktivnosti) {
+                    state.podaci.aktivnosti = state.podaci.aktivnosti.filter((a) => a.id !== action.payload);
+                }
+                if (state.deljeniPlan && state.deljeniPlan.aktivnosti) {
+                    state.deljeniPlan.aktivnosti = state.deljeniPlan.aktivnosti.filter((a) => a.id !== action.payload);
+                }
             });
-    },
-});
+    }
+}) 
 
 export const {resetujGenerisaniToken} = planSlice.actions;
 export default planSlice.reducer;
