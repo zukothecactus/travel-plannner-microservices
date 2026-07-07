@@ -148,35 +148,36 @@ const DeljeniPlan = ({ token }) => {
       </div>
       
       {/* Sekcija za kalendar aktivnosti */}
-   <div style={{ marginTop: '40px', marginBottom: '30px' }}>
-     <h2>📅 Raspored putovanja</h2>
-     {sveAktivnosti.length > 0 ? (
-       <KalendarAktivnosti 
-         aktivnosti={sveAktivnosti}
-         onAktivnostSelektovana={handlePregledAktivnosti} // OVO JE IZMENJENO
-         onPrazanSlotSelektovan={jeEditMod ? handlePrazanSlotZaDodavanje : handleSamoPregled}        // OVO JE IZMENJENO
-       />
-     ) : (
-       <p className="text-muted" style={{ fontStyle: 'italic' }}>
-         Nema planiranih aktivnosti za ovo putovanje.
-       </p>
-     )}
-   </div>
+    <div style={{ marginTop: '40px', marginBottom: '30px' }}>
+      <h2>📅 Raspored putovanja</h2>
+      {sveAktivnosti.length > 0 ? (
+        <KalendarAktivnosti 
+          aktivnosti={sveAktivnosti}
+          onAktivnostSelektovana={handlePregledAktivnosti} // OVO JE IZMENJENO
+          onPrazanSlotSelektovan={jeEditMod ? handlePrazanSlotZaDodavanje : handleSamoPregled}        // OVO JE IZMENJENO
+        />
+      ) : (
+        <p className="text-muted" style={{ fontStyle: 'italic' }}>
+          Nema planiranih aktivnosti za ovo putovanje.
+        </p>
+      )}
 
-   {/* Naš postojeći modal, sada u READ-ONLY modu */}
-   {prikaziDetalje && (
-     <DodajAktivnost 
-       isOpen={prikaziDetalje}
-       onClose={() => {
-         setPrikaziDetalje(false);
-         setAktivnostZaDetalje(null);
-       }}
-       planId={deljeniPlan.id}
-       destinacijaId={aktivnostZaDetalje?.destinacijaId}
-       aktivnostZaIzmenu={aktivnostZaDetalje}
-       samoPregled={!jeEditMod} // OVO KLJUČNO ZAKLJUČAVA FORMU
-     />
-   )}
+      {prikaziDetalje && (
+        <div style={{ marginTop: '20px' }}>
+          <DodajAktivnost 
+            isOpen={prikaziDetalje}
+            onClose={() => {
+              setPrikaziDetalje(false);
+              setAktivnostZaDetalje(null);
+            }}
+            planId={deljeniPlan.id}
+            destinacijaId={aktivnostZaDetalje?.destinacijaId}
+            aktivnostZaIzmenu={aktivnostZaDetalje}
+            samoPregled={!jeEditMod} // OVO KLJUČNO ZAKLJUČAVA FORMU
+          />
+        </div>
+      )}
+    </div>
 
       <div style={{ marginTop: '40px', marginBottom: '50px' }}>
         <h2>💰 Troškovi</h2>

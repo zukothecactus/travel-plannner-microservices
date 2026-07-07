@@ -1,4 +1,4 @@
-﻿using Microsoft.ServiceFabric.Services.Communication.Runtime;
+using Microsoft.ServiceFabric.Services.Communication.Runtime;
 using Microsoft.ServiceFabric.Services.Remoting.Runtime;
 using Microsoft.ServiceFabric.Services.Runtime;
 using System;
@@ -11,6 +11,8 @@ using TravelDataService.Models;
 using TravelPlanner.Interfaces;
 using TravelPlanner.Interfaces.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.ServiceFabric.Services.Remoting.Client;
+using Microsoft.ServiceFabric.Services.Client;
 
 namespace TravelDataService
 {
@@ -231,10 +233,15 @@ namespace TravelDataService
         {
             using (var context = new TravelDbContext())
             {
-                // Direktno iz baze uzimamo samo sumu, što je ultra brzo i bezbedno za serijalizaciju
-                return await context.Troskovi
+                double troskoviSum = await context.Troskovi
                     .Where(t => t.PlanPutovanjaId == planId)
                     .SumAsync(t => t.Iznos);
+
+                double aktivnostiSum = await context.Aktivnosti
+                    .Where(a => a.Destinacija.PlanPutovanjaId == planId)
+                    .SumAsync(a => a.Trosak ?? 0);
+
+                return troskoviSum + aktivnostiSum;
             }
         }
 
@@ -325,6 +332,12 @@ namespace TravelDataService
             {
                 context.Aktivnosti.Add(aktivnost);
                 await context.SaveChangesAsync();
+
+                var dest = await context.Destinacije.FindAsync(aktivnost.DestinacijaId);
+                if (dest != null)
+                {
+                    await InvalidateBudgetCacheAsync(dest.PlanPutovanjaId);
+                }
                 return true;
             }
         }
@@ -343,6 +356,12 @@ namespace TravelDataService
                 postojecaAktivnost.Trosak = izmenjenaAktivnost.Trosak;
                 postojecaAktivnost.Status = izmenjenaAktivnost.Status;
                 await context.SaveChangesAsync();
+
+                var dest = await context.Destinacije.FindAsync(postojecaAktivnost.DestinacijaId);
+                if (dest != null)
+                {
+                    await InvalidateBudgetCacheAsync(dest.PlanPutovanjaId);
+                }
                 return true;
             }
         }
@@ -354,11 +373,33 @@ namespace TravelDataService
                 var aktivnost = await context.Aktivnosti.FindAsync(aktivnostId);
                 if (aktivnost != null)
                 {
+                    var dest = await context.Destinacije.FindAsync(aktivnost.DestinacijaId);
+
                     context.Aktivnosti.Remove(aktivnost);
                     await context.SaveChangesAsync();
+
+                    if (dest != null)
+                    {
+                        await InvalidateBudgetCacheAsync(dest.PlanPutovanjaId);
+                    }
                     return true;
                 }
                 return false;
+            }
+        }
+
+        private async Task InvalidateBudgetCacheAsync(int planId)
+        {
+            try
+            {
+                var budgetProxy = ServiceProxy.Create<IBudgetService>(
+                    new Uri("fabric:/TravelPlannerApp/BudgetService"),
+                    new ServicePartitionKey(planId));
+                await budgetProxy.InvalidirajKesBudzetaAsync(planId);
+            }
+            catch (Exception ex)
+            {
+                ServiceEventSource.Current.ServiceMessage(this.Context, $"Greška pri invalidaciji keša za plan {planId}: {ex.Message}");
             }
         }
 

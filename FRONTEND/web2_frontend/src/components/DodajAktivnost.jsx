@@ -54,8 +54,7 @@ const FormaAktivnost = ({ isOpen, onClose, planId, destinacijaId, aktivnostZaIzm
   };
 
   return (
-    <div className="modal-backdrop">
-      <div className="modal-card">
+    <div className="card" style={{ marginTop: '20px', textAlign: 'left' }}>
         {/* 2. Dinamičan naslov u zavisnosti od moda */}
         <h3>{samoPregled ? 'Detalji aktivnosti' : (aktivnostZaIzmenu ? 'Izmeni aktivnost' : 'Dodaj novu aktivnost')}</h3>
         
@@ -118,7 +117,6 @@ const FormaAktivnost = ({ isOpen, onClose, planId, destinacijaId, aktivnostZaIzm
             )}
           </div>
         </form>
-      </div>
     </div>
   );
 };

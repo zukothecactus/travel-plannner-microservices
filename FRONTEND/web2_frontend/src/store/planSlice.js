@@ -201,6 +201,7 @@ export const dodajAktivnost = createAsyncThunk(
     async (novaAktinost, {dispatch}) => {
         const odgovor = await api.post('/PlanPutovanja/aktivnost', novaAktinost);
         dispatch(dobaviPlan(novaAktinost.planPutovanjaId));
+        dispatch(dobaviPotrosnju(novaAktinost.planPutovanjaId));
         return odgovor.data;
     }
 );
@@ -210,6 +211,7 @@ export const obrisiAktivnost = createAsyncThunk(
         try {
             await api.delete(`/PlanPutovanja/aktivnost/${aktivnostId}`);
             dispatch(dobaviPlan(planId));
+            dispatch(dobaviPotrosnju(planId));
         } catch (error) {
             return rejectWithValue(error.response?.data || "Greška pri brisanju aktivnosti");
         }
@@ -221,6 +223,7 @@ export const izmeniAktivnost = createAsyncThunk(
         try {
             await api.put(`/PlanPutovanja/aktivnost/${izmenjenaAktivnost.id}`, izmenjenaAktivnost);
             dispatch(dobaviPlan(izmenjenaAktivnost.planPutovanjaId));
+            dispatch(dobaviPotrosnju(izmenjenaAktivnost.planPutovanjaId));
             return izmenjenaAktivnost;
         } catch (error) {
             return rejectWithValue(error.response?.data || "Greška pri izmeni aktivnosti");

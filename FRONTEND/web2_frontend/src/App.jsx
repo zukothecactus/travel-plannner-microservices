@@ -9,7 +9,8 @@ import {
   izmeniPlan,
   izmeniDestinaciju,
   izmeniTrosak, 
-  izmeniAktivnost
+  izmeniAktivnost,
+  obrisiAktivnost
 } from './store/planSlice';
 import { logout } from './store/authSlice';
 import { generisiPlanPDF } from './services/pdfGenerator';
@@ -24,6 +25,7 @@ import Sharing from './components/Sharing';
 import DeljeniPlan from './components/DeljeniPlan';
 import DodajAktivnost from './components/DodajAktivnost';
 import KalendarAktivnosti from './components/KalendarAktivnosti';
+import RouteMap from './components/RouteMap';
 import './App.css';
 
 function App() {
@@ -408,7 +410,27 @@ if (!token) {
                   aktivnosti={sveAktivnosti} // Menjamo ovo!
                   onAktivnostSelektovana={handleAktivnostSelektovana}
                   onPrazanSlotSelektovan={handlePrazanSlotSelektovan}
+                  onAktivnostObrisana={(aktivnostId) => dispatch(obrisiAktivnost({ aktivnostId, planId: podaci.id }))}
                 />
+              </div>
+
+              {prikaziModalZaAktivnost && (
+                <div style={{ marginTop: '20px' }}>
+                  <DodajAktivnost 
+                    isOpen={prikaziModalZaAktivnost}
+                    onClose={() => {
+                      setPrikaziModalZaAktivnost(false);
+                      setAktivnostZaEdit(null); // Resetujemo kada zatvorimo
+                    }}
+                    planId={aktivniPlanId}
+                    destinacijaId={aktivnaDestinacijaId || (podaci?.destinacije?.length > 0 ? podaci.destinacije[0].id : 0)}
+                    aktivnostZaIzmenu={aktivnostZaEdit}
+                  />
+                </div>
+              )}
+
+              <div style={{ marginTop: '30px' }}>
+                <RouteMap activities={sveAktivnosti} />
               </div>
 
               {/* Sekcija za Troškove */}
@@ -511,19 +533,7 @@ if (!token) {
                   }} 
                 />
               )}
-              {/* Modal za dodavanje/izmenu aktivnosti */}
-              {prikaziModalZaAktivnost && (
-                <DodajAktivnost 
-                  isOpen={prikaziModalZaAktivnost}
-                  onClose={() => {
-                    setPrikaziModalZaAktivnost(false);
-                    setAktivnostZaEdit(null); // Resetujemo kada zatvorimo
-                  }}
-                  planId={aktivniPlanId}
-                  destinacijaId={aktivnaDestinacijaId|| (podaci?.destinacije?.length > 0 ? podaci.destinacije[0].id : 0)}
-                  aktivnostZaIzmenu={aktivnostZaEdit}
-                />
-              )}
+
             </div>
           )}
         </div>
