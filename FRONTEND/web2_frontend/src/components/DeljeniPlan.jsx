@@ -6,11 +6,14 @@ import DodajDestinaciju from './DodajDestinaciju';
 import Spisak from './Spisak';
 import KalendarAktivnosti from './KalendarAktivnosti';
 import DodajAktivnost from './DodajAktivnost';
+import Login from './Login';
 
 const DeljeniPlan = ({ token }) => {
   const dispatch = useDispatch();
   
   const { deljeniPlan, nivoPristupaDeljenog, deljenjeUcitava, deljenjeGreska } = useSelector((state) => state.plan);
+
+  const ulogovaniToken = useSelector((state) => state.auth.token);
 
   // Lokalna stanja za modal detalja
   const [prikaziDetalje, setPrikaziDetalje] = useState(false);
@@ -20,20 +23,49 @@ const DeljeniPlan = ({ token }) => {
     if (token) {
       dispatch(validirajDeljeniLink(token));
     }
-  }, [dispatch, token]);
+  }, [dispatch, token, ulogovaniToken]);
 
   if (deljenjeUcitava) {
     return <div style={{ textAlign: 'center', marginTop: '50px', color: 'var(--text-muted)' }}>Učitavanje deljenog plana putovanja...</div>;
   }
 
   if (deljenjeGreska) {
+    // Bezbedna provera koja pokriva i stringove i objekte koje axios/redux vrati
+    const greskaString = typeof deljenjeGreska === 'object' ? JSON.stringify(deljenjeGreska) : String(deljenjeGreska);
+    
+    const zahtevaLogin = 
+      greskaString.includes('401') || 
+      greskaString.toLowerCase().includes('ulogovati') || 
+      greskaString.toLowerCase().includes('unauthorized');
+
+    if (zahtevaLogin) {
+      return (
+        <div className="app-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: '40px' }}>
+          <div style={{ 
+            width: '100%', 
+            maxWidth: '420px', 
+            padding: '15px', 
+            marginBottom: '10px', 
+            borderRadius: '8px', 
+            background: '#fee2e2', 
+            color: 'var(--danger)', 
+            border: '1px solid #fca5a5', 
+            fontSize: '14px', 
+            textAlign: 'center',
+            fontWeight: '600'
+          }}>
+            🔐 Ovaj plan je podeljen u EDIT modu. Morate se ulogovati da biste mu pristupili ili vršili izmene.
+          </div>
+          <Login onPrebaciNaRegistraciju={() => window.location.href = '/register'} />
+        </div>
+      );
+    }
+
+    // Za sve ostale greške (npr. 404 Not Found ako link ne postoji)
     return (
-      <div className="card" style={{ textAlign: 'center', marginTop: '50px', maxWidth: '500px', margin: '50px auto' }}>
-        <h2 style={{ color: 'var(--danger)' }}>Greška pri pristupu</h2>
-        <p className="text-muted">{typeof deljenjeGreska === 'string' ? deljenjeGreska : 'Link je nevalidan ili je istekao.'}</p>
-        <button onClick={() => window.location.href = '/'} className="btn btn-primary" style={{ marginTop: '15px' }}>
-          Idi na početnu
-        </button>
+      <div className="card" style={{ textAlign: 'center', marginTop: '50px', padding: '30px', color: 'var(--danger)' }}>
+        <h4>Upozorenje</h4>
+        <p>{typeof deljenjeGreska === 'object' ? deljenjeGreska.poruka || 'Link nije validan.' : deljenjeGreska}</p>
       </div>
     );
   }

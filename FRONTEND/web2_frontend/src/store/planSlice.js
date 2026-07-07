@@ -166,7 +166,6 @@ export const izmeniPlan = createAsyncThunk(
         }
     }
 );
-
 // Izmena selektovane destinacije
 export const izmeniDestinaciju = createAsyncThunk(
     'plan/izmeniDestinaciju',
@@ -181,7 +180,6 @@ export const izmeniDestinaciju = createAsyncThunk(
         }
     }
 );
-
 // Izmena troška
 export const izmeniTrosak = createAsyncThunk(
     'plan/izmeniTrosak',

@@ -1,4 +1,4 @@
-using Microsoft.ServiceFabric.Data.Collections;
+﻿using Microsoft.ServiceFabric.Data.Collections;
 using Microsoft.ServiceFabric.Services.Communication.Runtime;
 using Microsoft.ServiceFabric.Services.Remoting.Runtime;
 using Microsoft.ServiceFabric.Services.Runtime;
@@ -9,6 +9,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using TravelPlanner.Interfaces;
+using TravelPlanner.Interfaces.Models;
 
 namespace SharingService
 {
@@ -28,6 +29,25 @@ namespace SharingService
             {
                 await redZaNotifikacije.EnqueueAsync(tx, poruka);
                 await tx.CommitAsync();
+            }
+        }
+        public async Task<DetaljiDeljenja> DobaviDetaljeDeljenjaAsync(string token)
+        {
+            // Dobavljamo ili kreiramo rečnik unutar stanja servisa
+            var deljenjaRecnik = await this.StateManager.GetOrAddAsync<IReliableDictionary<string, DetaljiDeljenja>>("deljenjaLinkoviRecnik");
+
+            using (var tx = this.StateManager.CreateTransaction())
+            {
+                // Pokušavamo da izvučemo podatke na osnovu jedinstvenog tokena (ključa)
+                var rezultat = await deljenjaRecnik.TryGetValueAsync(tx, token);
+
+                if (rezultat.HasValue)
+                {
+                    // Ako podatak postoji, vraćamo ga (transakcija se automatski zatvara kroz using blok)
+                    return rezultat.Value;
+                }
+
+                return null; // Token ne postoji ili je obrisan/istekao
             }
         }
 

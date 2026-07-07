@@ -12,6 +12,7 @@ import {
   izmeniAktivnost
 } from './store/planSlice';
 import { logout } from './store/authSlice';
+import { generisiPlanPDF } from './services/pdfGenerator';
 import DodajTrosak from './components/DodajTrosak';
 import ListaPlanova from './components/ListaPlanova';
 import DodajDestinaciju from './components/DodajDestinaciju';
@@ -70,21 +71,6 @@ const [aktivnaDestinacijaId, setAktivnaDestinacijaId] = useState(null); // Dodat
     }
   }, [dispatch, token, aktivniPlanId]);
 
-  // Rute za deljene planove
-  const putanja = window.location.pathname;
-  if (putanja.startsWith('/deli/')) {
-    const urlToken = putanja.split('/deli/')[1];
-    return <DeljeniPlan token={urlToken} />;
-  }
-
-  // Prikaz login/registracije ukoliko korisnik nema token
-  if (!token) {
-    return prikaziLogin ? (
-      <Login onPrebaciNaRegistraciju={() => setPrikaziLogin(false)} />
-    ) : (
-      <Register onPrebaciNaLogin={() => setPrikaziLogin(true)} />
-    );
-  }
 
   const handleSavePlan = () => {
     dispatch(izmeniPlan({
@@ -186,6 +172,26 @@ const prikazaniTroskovi = selektovanaKategorija === 'Svi troskovi'
 // Prikupljamo sve aktivnosti iz svih destinacija koje pripadaju ovom planu
 const sveAktivnosti = podaci?.destinacije?.flatMap(d => d.aktivnosti || []) || [];
 
+// Provera da li se korisnik trenutno nalazi na ruti za deljeni plan
+const jesteDeljeniLink = window.location.pathname.includes('/deli/');
+const deljeniToken = jesteDeljeniLink ? window.location.pathname.split('/deli/')[1] : null;
+
+// 1. PRVO proveravamo da li je korisnik na deljenom linku
+if (jesteDeljeniLink) {
+  // Renderujemo DeljeniPlan bez obzira da li ima token. 
+  // Ako mu treba token za EDIT a nema ga, DeljeniPlan će sam prikazati Login formu.
+  return <DeljeniPlan token={deljeniToken} />;
+}
+
+// 2. TEK ONDA, ako NIJE na deljenom linku, a nema token, tražimo da se uloguje za pristup glavnoj aplikaciji
+if (!token) {
+  return prikaziLogin ? (
+    <Login onPrebaciNaRegistraciju={() => setPrikaziLogin(false)} />
+  ) : (
+    <Register onPrebaciNaLogin={() => setPrikaziLogin(true)} />
+  );
+}
+
   return (
     <div className="app-container">
       
@@ -253,8 +259,15 @@ const sveAktivnosti = podaci?.destinacije?.flatMap(d => d.aktivnosti || []) || [
                   >
                     🔗 Podeli plan
                   </button>
+                  <button 
+                    onClick={() => generisiPlanPDF(podaci, trenutniBudzet)} 
+                    className="btn btn-primary"
+                    style={{ backgroundColor: '#2ca01c', borderColor: '#2ca01c', margin: '30px 10px 0 0' }} // Zelena boja za dokumente
+                  >
+                    📄 Generiši PDF
+                  </button>
                   {!izmenaPlana && (
-                    <button onClick={pokreniIzmenuPlana} className="btn btn-primary" style={{ marginTop: '30px', marginLeft: '10px' }}>
+                    <button onClick={pokreniIzmenuPlana} className="btn btn-primary" style={{ marginTop: '30px', marginLeft: '-10px' }}>
                       ✏ Izmeni plan
                     </button>
                   )}

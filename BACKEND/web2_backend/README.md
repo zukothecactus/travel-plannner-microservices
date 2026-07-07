@@ -2,17 +2,17 @@
 
 ## ?? Pregled Projekta
 
-TravelPlanner je kompleksna ASP.NET Core aplikacija sa **mikroservisnom arhitekturom** koju pokre?e **Azure Service Fabric**. Aplikacija omogu?ava korisnicima da planiraju putovanja, prate budžete, upravljaju destinacijama, aktivnostima i delim planove sa drugim korisnicima.
+TravelPlanner je kompleksna ASP.NET Core aplikacija sa **mikroservisnom arhitekturom** koju pokre?e **Azure Service Fabric**. Aplikacija omogu?ava korisnicima da planiraju putovanja, prate budï¿½ete, upravljaju destinacijama, aktivnostima i delim planove sa drugim korisnicima.
 
-### Tehnološki Stack
+### Tehnoloï¿½ki Stack
 - **.NET 8** - Framework
 - **ASP.NET Core** - Web API
 - **Entity Framework Core** - ORM
 - **Azure Service Fabric** - Orkestracija mikroservisa
 - **SQL Server** - Baza podataka
 - **JWT** - Autentifikacija i autorizacija
-- **BCrypt** - Heširavanje lozinki
-- **CORS** - Podrška za React frontend
+- **BCrypt** - Heï¿½iravanje lozinki
+- **CORS** - Podrï¿½ka za React frontend
 
 ---
 
@@ -38,9 +38,9 @@ POST /api/auth/login - Prijava korisnika i generisanje JWT tokena
 ```
 
 Tok autentifikacije:
-1. Korisnik šalje email i lozinku
+1. Korisnik Salje email i lozinku
 2. TravelDataService verifikuje kredencijale (BCrypt validacija)
-3. Ako su validni, generiše se JWT token sa:
+3. Ako su validni, generise se JWT token sa:
    - `sub` - ID korisnika
    - `name` - Ime korisnika
    - `email` - Email adresa
@@ -65,18 +65,18 @@ PUT /api/planputovanja/destinacija/{id} - Izmena destinacije
 DELETE /api/planputovanja/destinacija/{id} - Brisanje destinacije
 ```
 
-**Upravljanje Trošcima:**
+**Upravljanje Troscima:**
 ```
-POST /api/planputovanja/trosak - Dodavanje troška u plan
-PUT /api/planputovanja/trosak/{id} - Izmena troška
-DELETE /api/planputovanja/trosak/{id} - Brisanje troška
-GET /api/planputovanja/{id}/potrosnja - Preuzimanje trenutne potrošnje
+POST /api/planputovanja/trosak - Dodavanje troï¿½ka u plan
+PUT /api/planputovanja/trosak/{id} - Izmena troï¿½ka
+DELETE /api/planputovanja/trosak/{id} - Brisanje troï¿½ka
+GET /api/planputovanja/{id}/potrosnja - Preuzimanje trenutne potroï¿½nje
 ```
 
 **Upravljanje To-Do Stavkama:**
 ```
 POST /api/planputovanja/todo - Dodavanje stavke na listu
-PUT /api/planputovanja/todo/{id}/toggle - Ozna?avanje stavke kao završene/nezavršene
+PUT /api/planputovanja/todo/{id}/toggle - Ozna?avanje stavke kao zavrï¿½ene/nezavrï¿½ene
 DELETE /api/planputovanja/todo/{id} - Brisanje stavke
 ```
 
@@ -93,11 +93,11 @@ POST /api/planputovanja/{id}/generisi-token - Generisanje sharing tokena
 GET /api/planputovanja/validiraj-deljenje/{token} - Validacija i preuzimanje deljenog plana (bez autentifikacije)
 ```
 
-Sharing Token sadrži:
+Sharing Token sadrzi:
 - `PlanId` - ID plana koji se deli
-- `NivoPristupa` - "VIEW" (samo pregled) ili "EDIT" (može menjati)
+- `NivoPristupa` - "VIEW" (samo pregled) ili "EDIT" (moze menjati)
 - `TipTokena` - "DeljenjePlana" (za sigurnost)
-- Trajanje - Korisnik definiše (u minutima)
+- Trajanje - Korisnik definise (u minutima)
 
 ##### **AdminController** - Administrativne funkcije
 Zahteva ulogu `ADMIN` (`[Authorize(Roles = "ADMIN")]`).
@@ -117,41 +117,41 @@ Baza podataka servis koji upravlja svim persistentnim podacima u SQL Server bazi
 - **Baza**: SQL Server (LocalDB - `TravelPlanner_obren`)
 - **Komunikacija**: Service Fabric Remoting
 
-#### Klju?ne Metode:
+#### Kljucne Metode:
 
 **Planovi Putovanja:**
 - `AddPlanPutovanjaAsync()` - Kreiranje novog plana (povezuje se sa ulogovanim korisnikom)
 - `GetPlanoviPutovanjaAsync()` - Preuzimanje svih planova za korisnika
-- `GetPlanPutovanjaSaDetaljimaAsync()` - Preuzimanje plana sa svim relacijama (destinacije, trošcima, To-Do stavkama)
-- `AzurirajPlanPutovanjaAsync()` - Ažuriranje (Naziv, Opis, PlaniraniBudzet)
+- `GetPlanPutovanjaSaDetaljimaAsync()` - Preuzimanje plana sa svim relacijama (destinacije, troï¿½cima, To-Do stavkama)
+- `AzurirajPlanPutovanjaAsync()` - Aï¿½uriranje (Naziv, Opis, PlaniraniBudzet)
 - `ObrisiPlanPutovanjaAsync()` - Brisanje plana
 
 **Destinacije:**
 - `AddDestinacijaAsync()` - Dodavanje destinacije
-- `AzurirajDestinacijuAsync()` - Ažuriranje (NazivMesta, Napomena, DatumDolaska, DatumOdlaska)
+- `AzurirajDestinacijuAsync()` - Aï¿½uriranje (NazivMesta, Napomena, DatumDolaska, DatumOdlaska)
 - `ObrisiDestinacijuAsync()` - Brisanje destinacije
 
-**Trošci:**
-- `AddTrosakAsync()` - Dodavanje troška
-- `AzurirajTrosakAsync()` - Ažuriranje (Kategorija, Opis, Iznos, Datum)
-- `ObrisiTrosakAsync()` - Brisanje troška
-- `DobaviSumuTroskovaZaPlanAsync()` - Brzo preuzimanje sume troškova (koristi se za keš u BudgetService)
+**Troï¿½ci:**
+- `AddTrosakAsync()` - Dodavanje troï¿½ka
+- `AzurirajTrosakAsync()` - Aï¿½uriranje (Kategorija, Opis, Iznos, Datum)
+- `ObrisiTrosakAsync()` - Brisanje troï¿½ka
+- `DobaviSumuTroskovaZaPlanAsync()` - Brzo preuzimanje sume troï¿½kova (koristi se za keï¿½ u BudgetService)
 
 **To-Do Stavke:**
 - `DodajToDoStavkuAsync()` - Dodavanje stavke
-- `PromeniStatusStavkeAsync()` - Toggle završenosti
+- `PromeniStatusStavkeAsync()` - Toggle zavrï¿½enosti
 - `ObrisiToDoStavkuAsync()` - Brisanje stavke
 
 **Aktivnosti:**
 - `DodajAktivnostAsync()` - Dodavanje aktivnosti
-- `AzurirajAktivnostAsync()` - Ažuriranje svih polja
+- `AzurirajAktivnostAsync()` - Aï¿½uriranje svih polja
 - `ObrisiAktivnostAsync()` - Brisanje aktivnosti
 
 **Upravljanje Korisnicima:**
-- `RegistrujKorisnikaAsync()` - Registracija (lozinka se heširuje sa BCrypt)
+- `RegistrujKorisnikaAsync()` - Registracija (lozinka se heï¿½iruje sa BCrypt)
 - `ProverKredencijalAsync()` - Verifikacija lozinke tokom logovanja
 - `DobaviSveKorisnikeAsync()` - Preuzimanje svih korisnika (za admin)
-- `ObrisiKorisnikaAsync()` - Brisanje korisnika (ne može se obrisati glavni admin ID=1)
+- `ObrisiKorisnikaAsync()` - Brisanje korisnika (ne moï¿½e se obrisati glavni admin ID=1)
 - `PromeniUloguKorisnikaAsync()` - Promena uloge (ADMIN/KORISNIK)
 
 #### Baza Podataka - Tabele:
@@ -208,46 +208,46 @@ Korisnici
 ```
 
 ### 3. **BudgetService** (Stateful Servis)
-Brzi in-memory servis koji prati potrošnju budžeta sa keš optimizacijom.
+Brzi in-memory servis koji prati potroï¿½nju budï¿½eta sa keï¿½ optimizacijom.
 
 #### Tehni?ki Detalji:
 - **Tip**: Stateful Service (?uva stanje u memoriji klastera)
-- **Stanje**: `IReliableDictionary<int, double>` - Mapira Plan ID ? Trenutna Potrošnja
+- **Stanje**: `IReliableDictionary<int, double>` - Mapira Plan ID ? Trenutna Potroï¿½nja
 - **Svrha**: Brze upite bez optere?enja baze podataka
 - **Konzistentnost**: Automatski replikuje stanje na sve replike servisa
 
 #### Klju?ne Metode:
 
 **DodajTrosakUBudzetAsync(int planId, double iznos)**
-- Inkrementira potrošnju za plan za dati iznos
-- Ako plan još ne postoji u keš memoriji, inicijalizuje se sa 0
-- Vra?a novu sumu potrošnje
+- Inkrementira potroï¿½nju za plan za dati iznos
+- Ako plan joï¿½ ne postoji u keï¿½ memoriji, inicijalizuje se sa 0
+- Vra?a novu sumu potroï¿½nje
 - **Optimizacija**: Particionisano po `PlanId` - svaki plan ide na specifi?nu particiju
   
 ```
-Tok: WebAPI šalje trošak ? TravelDataService ?uva u SQL ? BudgetService ažurira keš
+Tok: WebAPI ï¿½alje troï¿½ak ? TravelDataService ?uva u SQL ? BudgetService aï¿½urira keï¿½
      Za particionisanje: new ServicePartitionKey(trosak.PlanPutovanjaId)
 ```
 
 **DobaviUkupnuPotrosnjuAsync(int planId)**
 - **2-fazna strategija**:
-  1. Prvo proverava keš - ako postoji, odmah vra?a (ultra brzo)
-  2. Ako keš nedostaje (CACHE MISS):
+  1. Prvo proverava keï¿½ - ako postoji, odmah vra?a (ultra brzo)
+  2. Ako keï¿½ nedostaje (CACHE MISS):
      - Poziva TravelDataService da izra?una sumu iz baze
-     - Popunjava keš sa tim vrednostima
+     - Popunjava keï¿½ sa tim vrednostima
      - Vra?a rezultat
 
 ```
-Optimizacija: Minimizira SQL upite - ve?ina zahteva radi sa keš memorijom
+Optimizacija: Minimizira SQL upite - ve?ina zahteva radi sa keï¿½ memorijom
 ```
 
 **InvalidirajKesBudzetaAsync(int planId)**
-- Briše vrednost iz keš memorije
-- Koristi se kada se trošci izmene/brišu
+- Briï¿½e vrednost iz keï¿½ memorije
+- Koristi se kada se troï¿½ci izmene/briï¿½u
 - Slede?i `DobaviUkupnuPotrosnjuAsync()` ?e ponovljivo izra?unati iz baze
 
 #### Integracija sa drugim servisima:
-- **BudgetService ? SharingService**: Kada se doda trošak, šalje notifikaciju
+- **BudgetService ? SharingService**: Kada se doda troï¿½ak, ï¿½alje notifikaciju
 - **WebAPI ? BudgetService**: Komunicira sa specifi?nom particijom:
   ```csharp
   var budgetProxy = ServiceProxy.Create<IBudgetService>(
@@ -267,16 +267,16 @@ Servis za upravljanje notifikacijama i podelama planova.
 
 **PosaljiNotifikacijuAsync(string poruka)**
 - Dodaje notifikaciju u red ?ekanja
-- Poziva je `BudgetService` kada se dodá trošak
-- Notifikacija sadrži: ID plana, iznos, novi budžet
+- Poziva je `BudgetService` kada se dodï¿½ troï¿½ak
+- Notifikacija sadrï¿½i: ID plana, iznos, novi budï¿½et
 
 #### Tok Notifikacija:
 ```
-1. Korisnik doda trošak preko WebAPI
+1. Korisnik doda troï¿½ak preko WebAPI
 2. TravelDataService ?uva u SQL
-3. BudgetService ažurira keš i poziva SharingService
-4. SharingService dodaje u red: "Plan 5: Dodat trošak od 50. Novi budžet iznosi: 250"
-5. Frontend može polling-ovati SharingService za nove notifikacije
+3. BudgetService aï¿½urira keï¿½ i poziva SharingService
+4. SharingService dodaje u red: "Plan 5: Dodat troï¿½ak od 50. Novi budï¿½et iznosi: 250"
+5. Frontend moï¿½e polling-ovati SharingService za nove notifikacije
 ```
 
 ### 5. **TravelPlanner.Interfaces**
@@ -285,7 +285,7 @@ Zajedni?ki interfejsi i modeli koje dele svi servisi.
 #### Interfejsi:
 ```csharp
 ITravelDataService - Baza podataka operacije
-IBudgetService - Budžet operacije
+IBudgetService - Budï¿½et operacije
 ISharingService - Notifikacije
 ```
 
@@ -302,10 +302,10 @@ KorisnikInfo, RegistracijaDto, PrijavaDto, ZahtevZaDeljenje
 ### Autentifikacija - JWT (JSON Web Tokens)
 
 **Tok logovanja:**
-1. Korisnik šalje email + lozinka na `/api/auth/login`
+1. Korisnik ï¿½alje email + lozinka na `/api/auth/login`
 2. TravelDataService verifikuje sa `BCrypt.Verify()`
-3. WebAPI generiše JWT token sa 2-satnim rokom trajanja
-4. Frontend ?uva token u localStorage i šalje u svakom zahtevom u `Authorization: Bearer {token}`
+3. WebAPI generiï¿½e JWT token sa 2-satnim rokom trajanja
+4. Frontend ?uva token u localStorage i ï¿½alje u svakom zahtevom u `Authorization: Bearer {token}`
 
 **Token Struktura:**
 ```json
@@ -324,8 +324,8 @@ KorisnikInfo, RegistracijaDto, PrijavaDto, ZahtevZaDeljenje
 
 **Nivoi pristupa:**
 ```
-- KORISNIK  - Može upravljati svojim planovima
-- ADMIN     - Ima pristup svim korisnicima i može menjati uloge
+- KORISNIK  - Moï¿½e upravljati svojim planovima
+- ADMIN     - Ima pristup svim korisnicima i moï¿½e menjati uloge
 ```
 
 **Primena:**
@@ -340,22 +340,22 @@ KorisnikInfo, RegistracijaDto, PrijavaDto, ZahtevZaDeljenje
 Odvojena autentifikacija od glavni JWT tokena:
 
 **Karakteristike:**
-- Kra?e trajanje (definiše korisnik pri generisanju)
-- Sadrži samo `PlanId` i `NivoPristupa`
+- Kra?e trajanje (definiï¿½e korisnik pri generisanju)
+- Sadrï¿½i samo `PlanId` i `NivoPristupa`
 - Druga?iji tajni klju? i issuer od glavnog JWT-a
-- `[AllowAnonymous]` endpoint - može pristupiti bilo ko sa validnim tokenom
+- `[AllowAnonymous]` endpoint - moï¿½e pristupiti bilo ko sa validnim tokenom
 
 **Primer Tokena za Deljenje:**
 ```json
 {
   "PlanId": "5",
   "NivoPristupa": "VIEW",           // ili "EDIT"
-  "TipTokena": "DeljenjePlana",     // Zaštita od reuse-a
+  "TipTokena": "DeljenjePlana",     // Zaï¿½tita od reuse-a
   "exp": 1234567890                 // Kratko trajanje
 }
 ```
 
-### Heširavanje Lozinki - BCrypt
+### Heï¿½iravanje Lozinki - BCrypt
 
 Lozinke se NIKAD ne ?uvaju u bazi:
 ```csharp
@@ -395,12 +395,12 @@ var budgetProxy = ServiceProxy.Create<IBudgetService>(
 var potrosnja = await budgetProxy.DobaviUkupnuPotrosnjuAsync(planId);
 ```
 
-**Zašto je ovo važno?**
-- Sve operacije za jedan plan idu na istu mašinu/repliku
-- Brže je jer nema mrežne latencije izme?u particija
-- Keš ostaje lokalan na particiji
+**Zaï¿½to je ovo vaï¿½no?**
+- Sve operacije za jedan plan idu na istu maï¿½inu/repliku
+- Brï¿½e je jer nema mreï¿½ne latencije izme?u particija
+- Keï¿½ ostaje lokalan na particiji
 
-### Tok Dodavanja Troška (End-to-End)
+### Tok Dodavanja Troï¿½ka (End-to-End)
 
 ```
 Frontend (React)
@@ -413,13 +413,13 @@ SQL Server Database
     ? return true
 WebAPI ? ServiceProxy.Create<IBudgetService> (sa ServicePartitionKey)
 BudgetService (Particija za ovaj plan)
-    ? Inkrementira keš memoriju
+    ? Inkrementira keï¿½ memoriju
     ? Poziva SharingService
 SharingService
     ? Enqueue notifikacija
 Frontend
     ? Polling/WebSocket ?eka rezultat
-    ? Prikazuje "Trošak od 50 je dodat!"
+    ? Prikazuje "Troï¿½ak od 50 je dodat!"
 ```
 
 ---
@@ -436,7 +436,7 @@ ServiceRuntime.RegisterServiceAsync("BudgetServiceType",
     context => new BudgetService(context)).GetAwaiter().GetResult();
 ```
 
-Ovo generiše `Service Fabric Application` koja pokre?e sve:
+Ovo generiï¿½e `Service Fabric Application` koja pokre?e sve:
 - WebAPI na `http://localhost:8080`
 - TravelDataService kao remote servis
 - BudgetService kao stateful servis
@@ -502,7 +502,7 @@ Migracije u `TravelDataService/Migrations/`:
    }
 ```
 
-### Scenario 2: Dodavanje Troška i Pra?enje Budžeta
+### Scenario 2: Dodavanje Troï¿½ka i Pra?enje Budï¿½eta
 
 ```
 1. Frontend ? POST /api/planputovanja/trosak
@@ -516,9 +516,9 @@ Migracije u `TravelDataService/Migrations/`:
 2. TravelDataService ?uva u SQL
    
 3. WebAPI ? BudgetService (ServicePartitionKey(1))
-   ? Inkrementira keš: budžet[1] = 500 + 75.50 = 575.50
+   ? Inkrementira keï¿½: budï¿½et[1] = 500 + 75.50 = 575.50
    ? BudgetService ? SharingService
-   ? Notifikacija: "Plan 1: Dodat trošak od 75.50. Novi budžet: 575.50"
+   ? Notifikacija: "Plan 1: Dodat troï¿½ak od 75.50. Novi budï¿½et: 575.50"
 
 4. Frontend ? GET /api/planputovanja/1/potrosnja
    {
@@ -530,17 +530,17 @@ Migracije u `TravelDataService/Migrations/`:
 ### Scenario 3: Deljenje Plana sa Prijateljima
 
 ```
-1. Korisnik (ID=5) želi da deli plan 10 sa prijateljima
+1. Korisnik (ID=5) ï¿½eli da deli plan 10 sa prijateljima
 
 2. Frontend ? POST /api/planputovanja/10/generisi-token
    {
      "nivoPristupa": "VIEW",
      "trajanjeUMinutima": 60
    }
-   ? WebAPI generiše JWT sa 1-satnim rokom
+   ? WebAPI generiï¿½e JWT sa 1-satnim rokom
    ? Vra?a token: "eyJhbGc..."
 
-3. Korisnik šalje token prijatelju kroz URL:
+3. Korisnik ï¿½alje token prijatelju kroz URL:
    https://frontend.com/planovi/pristup/eyJhbGc...
 
 4. Prijatelj (bez logovanja) ? GET /api/planputovanja/validiraj-deljenje/eyJhbGc...
@@ -561,7 +561,7 @@ Migracije u `TravelDataService/Migrations/`:
    ? Promene korisnika 3 u admina
    
 3. Admin ? DELETE /api/admin/korisnici/7
-   ? Briše korisnika (ali ne može obrisati ID=1 - glavni admin)
+   ? Briï¿½e korisnika (ali ne moï¿½e obrisati ID=1 - glavni admin)
 ```
 
 ---
@@ -572,14 +572,14 @@ Migracije u `TravelDataService/Migrations/`:
 - **Microsoft.ServiceFabric.Services** - Service Fabric SDK
 - **Microsoft.AspNetCore.Authentication.JwtBearer** - JWT autentifikacija
 - **Microsoft.EntityFrameworkCore.SqlServer** - EF + SQL Server
-- **BCrypt.Net-Core** - Heširovanje lozinki
+- **BCrypt.Net-Core** - Heï¿½irovanje lozinki
 - **System.IdentityModel.Tokens.Jwt** - JWT tokenizacija
 
 ### Hardkodirani Tajni Klju?evi (BEZBEDNOST!)
-?? **VAŽNO**: Ovi klju?evi su hardkodirani u razvoju, ALI se MORAJU prebaciti u Secrets ili Azure Key Vault za produkciju:
+?? **VAï¿½NO**: Ovi klju?evi su hardkodirani u razvoju, ALI se MORAJU prebaciti u Secrets ili Azure Key Vault za produkciju:
 
 ```csharp
-// JWT g?ówny klju?
+// JWT g?ï¿½wny klju?
 "nekiTajniKljucZaJWTmoraDaBudeJakoDugacakIliEnkripcijaNeceRaditiKakoTrebaIProgramCeOtkazati"
 
 // Sharing token klju?
@@ -657,10 +657,10 @@ web2_backend/
 TravelPlanner je **distribuirana aplikacija** sa **mikroservisnom arhitekturom** koja demonstrira:
 
 ? **Stateless servisi** - WebAPI i TravelDataService (bez stanja)
-? **Stateful servisi** - BudgetService i SharingService (sa keš memorijom)
-? **Particionisanje** - Brže ?itanja i pisanja za iste planove
+? **Stateful servisi** - BudgetService i SharingService (sa keï¿½ memorijom)
+? **Particionisanje** - Brï¿½e ?itanja i pisanja za iste planove
 ? **RPC komunikacija** - Service Fabric Remoting umesto HTTP-a
-? **Sigurnost** - JWT, RBAC, BCrypt heširovanje
+? **Sigurnost** - JWT, RBAC, BCrypt heï¿½irovanje
 ? **ORM** - Entity Framework sa SQL Server bazom
 ? **Skalabilnost** - Automatsko skaliranje particija i servisa kroz Service Fabric
 

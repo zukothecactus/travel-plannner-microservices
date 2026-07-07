@@ -19,15 +19,21 @@ namespace WebAPI.Controllers
     public class PlanPutovanjaController : ControllerBase
     {
         private readonly ITravelDataService _travelDataServiceProxy;
+        private readonly ISharingService _sharingServiceProxy;
 
         public PlanPutovanjaController()
         {
             // Odmah u konstruktoru kreiramo proxy za komunikaciju sa našim backend servisom
             _travelDataServiceProxy = ServiceProxy.Create<ITravelDataService>(
                 new Uri("fabric:/TravelPlannerApp/TravelDataService"));
-        
-           // _budgetServiceProxy = ServiceProxy.Create<ISharingAndBudgetService>( new Uri("fabric:/TravelPlannerApp/SharingAndBudgetService"),
-       // new ServicePartitionKey(0)); //kad radimo sa stateful servisima, moramo da navedemo i ključ particije, ovde pretpostavljamo da imamo samo jednu particiju, pa je kljuc 1
+
+            // 2. Inicijalizujemo proxy za Stateful SharingService sa ključem particije 0
+            _sharingServiceProxy = ServiceProxy.Create<ISharingService>(
+                new Uri("fabric:/TravelPlannerApp/SharingService"),
+                new ServicePartitionKey(0));
+
+            // _budgetServiceProxy = ServiceProxy.Create<ISharingAndBudgetService>( new Uri("fabric:/TravelPlannerApp/SharingAndBudgetService"),
+            // new ServicePartitionKey(0)); //kad radimo sa stateful servisima, moramo da navedemo i ključ particije, ovde pretpostavljamo da imamo samo jednu particiju, pa je kljuc 1
 
         }
 
@@ -256,8 +262,13 @@ namespace WebAPI.Controllers
             {
 
                 int ulogovaniKorisnikId = DobaviIdUlogovanogKorisnika();
-                var plan = await _travelDataServiceProxy.GetPlanPutovanjaSaDetaljimaAsync(ulogovaniKorisnikId);
-                if (plan == null) return Forbid("Plan putovanja nije pronađen ili nemate pristup.");
+                var plan = await _travelDataServiceProxy.GetPlanPutovanjaSaDetaljimaAsync(id);
+                if (plan == null) return NotFound("Plan putovanja nije pronađen.");
+
+                if (plan.KorisnikId != ulogovaniKorisnikId)
+                {
+                    return StatusCode(403, "Nemate pravo da delite ovaj plan putovanja.");
+                }
 
                 if (zahtev.NivoPristupa != "VIEW" && zahtev.NivoPristupa != "EDIT")
                 {
@@ -294,7 +305,8 @@ namespace WebAPI.Controllers
             }
         }
 
-        [AllowAnonymous] // Omogućavamo pristup bez autentifikacije, jer korisnik može da dobije token od nekog ko je već ulogovan
+
+        [AllowAnonymous]
         [HttpGet("validiraj-deljenje/{token}")]
         public async Task<IActionResult> ValidirajTokenZaDeljenje(string token)
         {
@@ -317,7 +329,7 @@ namespace WebAPI.Controllers
                     ClockSkew = TimeSpan.Zero
                 };
 
-                // Validacija i čitanje claim-ova
+                // Validacija i čitanje claim-ova iz JWT tokena
                 SecurityToken validiraniToken;
                 var principal = tokenHandler.ValidateToken(token, validationParameters, out validiraniToken);
 
@@ -335,9 +347,19 @@ namespace WebAPI.Controllers
                     return BadRequest("Token ne sadrži sve potrebne informacije.");
                 }
 
+                // KLJUČNA LOGIKA ZA 1. FIX: Provera EDIT moda i anonimnog korisnika
+                if (string.Equals(nivoPristupa, "EDIT", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (!User.Identity.IsAuthenticated)
+                    {
+                        // Vraćamo status 401 koji će React presresti i prikazati Login formu
+                        return Unauthorized(new { Poruka = "Ovaj plan je podeljen u EDIT modu. Morate se ulogovati." });
+                    }
+                }
+
                 int planId = int.Parse(planIdStr);
 
-                // Pozivamo proverenu metodu koja povlači specifičan plan sa svim detaljima
+                // Povlačimo specifičan plan iz baze
                 var plan = await _travelDataServiceProxy.GetPlanPutovanjaSaDetaljimaAsync(planId);
 
                 if (plan == null)
@@ -345,7 +367,7 @@ namespace WebAPI.Controllers
                     return NotFound("Plan putovanja više ne postoji.");
                 }
 
-                // Vraćamo ceo plan i nivo pristupa na frontend kako bi se odmah prikazali podaci
+                // Vraćamo podatke u formatu koji tvoj React frontend očekuje
                 return Ok(new
                 {
                     Plan = plan,
